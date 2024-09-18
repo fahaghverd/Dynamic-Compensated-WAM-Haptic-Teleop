@@ -1,0 +1,56 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/rowley/libbarrett_custom_examples/Dynamic Compensated Master Master/ex11_master_master_nogravity.cpp
+iostream
+-
+string
+-
+vector
+-
+boost/thread.hpp
+-
+barrett/detail/stl_utils.h
+-
+barrett/os.h
+-
+barrett/products/product_manager.h
+-
+barrett/systems.h
+-
+barrett/units.h
+-
+barrett/standard_main_function.h
+-
+ex11_master_master.h
+/home/rowley/libbarrett_custom_examples/Dynamic Compensated Master Master/ex11_master_master.h
+
+include/ex11_master_master.h
+stdexcept
+-
+arpa/inet.h
+-
+fcntl.h
+-
+sys/socket.h
+-
+syslog.h
+-
+unistd.h
+-
+barrett/detail/ca_macro.h
+-
+barrett/systems/abstract/single_io.h
+-
+barrett/thread/abstract/mutex.h
+-
+barrett/thread/disable_secondary_mode_warning.h
+-
+barrett/units.h
+-
+
