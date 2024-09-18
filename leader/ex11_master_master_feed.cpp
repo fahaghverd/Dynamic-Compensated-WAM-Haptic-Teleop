@@ -36,6 +36,8 @@ using namespace barrett;
 using detail::waitForEnter;
 
 
+
+
 bool validate_args(int argc, char** argv) {
 	if (argc != 2  &&  argc != 3) {
 		printf("Usage: %s <remoteHost> [--auto]\n", argv[0]);
