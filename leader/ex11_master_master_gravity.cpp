@@ -162,7 +162,14 @@ template <size_t DOF> int wam_main(int argc, char **argv, ProductManager &pm, sy
 
                 btsleep(0.1); // wait an execution cycle or two
                 if (mm.isLinked()) {
-                    printf("Linked with remote WAM.\n");
+                    printf("Linked with remote WAM.\n");	
+                    
+                    timelog.start();
+					connect(tg_kinematics.output, logger_kinematics.input);
+					connect(tg_dynamics.output, logger_dynamics.input);
+					printf("Logging started.\n");
+
+
                 } else {
                     printf("WARNING: Linking was unsuccessful.\n");
                 }
@@ -248,22 +255,24 @@ template <size_t DOF> int wam_main(int argc, char **argv, ProductManager &pm, sy
     }
 
 
+// Create the data directory using the provided name
+	std::string folderName = argv[2];
 	// Create the data directory using the provided name
-	std::string command = std::string("mkdir -p .data/") + argv[2]; // -p flag ensures it doesn't fail if the directory exists
+	std::string command = std::string("mkdir -p .data/") + folderName; // -p flag ensures it doesn't fail if the directory exists
 	if (system(command.c_str()) != 0) {
     	std::cerr << "Error: Could not create directory." << std::endl;
     	return 1;
 	}
 
-	std::string kinematicsFilename = ".data/" + std::string(argv[2]) + "/kinematics.txt";
-	std::string dynamicsFilename = ".data/" + std::string(argv[2]) + "/dynamics.txt";
-	std::string configFilename = ".data/" + std::string(argv[2]) + "/config.txt";
+	std::string kinematicsFilename = ".data/" + folderName + "/kinematics.txt";
+	std::string dynamicsFilename = ".data/" + folderName + "/dynamics.txt";
+	std::string configFilename = ".data/" + folderName + "/config.txt";
 	std::ofstream kinematicsFile(kinematicsFilename);
 	std::ofstream dynamicsFile(dynamicsFilename);
 	std::ofstream configFile(configFilename);
 
 	//Config File Writing
-	configFile << "Master Master Teleop with Gravity Compensation.\n";
+	configFile << "Master Master Teleop with Gravity Compensation-Leader.\n";
 	configFile << "Kinematics data: time, desired joint pos, feedback joint pos, desired joint vel, feedback joint vel, desired joint acc, feedback joint acc.\n";
 	configFile << "Dynamics data: time, wam joint torque input, wam gravity input, inverse dynamic.\n";
 	configFile << "Joint Position PID Controller: \nkp: " << wam.jpController.getKp() << "\nki: " << wam.jpController.getKi()<<  "\nkd: "<< wam.jpController.getKd() <<"\nControl Signal Limit: " << wam.jpController.getControlSignalLimit() <<".\n";
@@ -280,7 +289,7 @@ template <size_t DOF> int wam_main(int argc, char **argv, ProductManager &pm, sy
 	log::Reader<tuple_type_dynamics> lr_Dynamics(tmpFile_dynamics);
 	lr_Dynamics.exportCSV(dynamicsFile);
 	configFile.close();
-	printf("Output written to %s folder.\n", argv[2]);
+	printf("Output written to %s folder.\n", folderName[2]);
 
 	std::remove(tmpFile_kinematics);
 	std::remove(tmpFile_dynamics);

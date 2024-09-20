@@ -128,6 +128,14 @@ template <size_t DOF> int wam_main(int argc, char **argv, ProductManager &pm, sy
 	jtLimits << 15, 15, 15;
 	systems::Callback<jt_type> feedSat(boost::bind(saturateJt<DOF>,_1, jtLimits));
 
+	connect(wam.jvOutput, hp.input);
+	connect(hp.output, jaCur.input);
+	pm.getExecutionManager()->startManaging(hp);
+	sleep(1);
+	connect(wam.jpOutput, inverseDyn.jpInputDynamics);
+	connect(wam.jvOutput, inverseDyn.jvInputDynamics);
+    connect(jaCur.output, inverseDyn.jaInputDynamics);
+
 	//Applied External Torque
 	jt_type A;
 	A << -2.0, 0.0, 0.0;
@@ -136,15 +144,6 @@ template <size_t DOF> int wam_main(int argc, char **argv, ProductManager &pm, sy
 	systems::Ramp time(pm.getExecutionManager(), 1.0);
 	connect(time.output, extorqFeedFWD.timef);
 	connect(extorqFeedFWD.extorq, feedSat.input);
-
-    //ID fpor arm
-    connect(wam.jvOutput, hp.input);
-	connect(hp.output, jaCur.input);
-	pm.getExecutionManager()->startManaging(hp);
-	sleep(1);
-	connect(wam.jpOutput, inverseDyn.jpInputDynamics);
-	connect(wam.jvOutput, inverseDyn.jvInputDynamics);
-    connect(jaCur.output, inverseDyn.jaInputDynamics);
 
     //Desired Vel and Acc
     double h_omega_p = 25.0;
@@ -229,6 +228,7 @@ template <size_t DOF> int wam_main(int argc, char **argv, ProductManager &pm, sy
 					connect(tg_kinematics.output, logger_kinematics.input);
 					connect(tg_dynamics.output, logger_dynamics.input);
                     printf("Logging started.\n");
+
                 } else {
                     printf("WARNING: Linking was unsucc essful.\n");
                 }
@@ -322,39 +322,41 @@ template <size_t DOF> int wam_main(int argc, char **argv, ProductManager &pm, sy
     }
 
 	// Create the data directory using the provided name
-	std::string command = std::string("mkdir -p .data/") + argv[2]; // -p flag ensures it doesn't fail if the directory exists
+	std::string folderName = argv[2];
+	// Create the data directory using the provided name
+	std::string command = std::string("mkdir -p .data/") + folderName; // -p flag ensures it doesn't fail if the directory exists
 	if (system(command.c_str()) != 0) {
     	std::cerr << "Error: Could not create directory." << std::endl;
     	return 1;
 	}
 
-	std::string kinematicsFilename = ".data/" + std::string(argv[2]) + "/kinematics.txt";
-	std::string dynamicsFilename = ".data/" + std::string(argv[2]) + "/dynamics.txt";
-	std::string configFilename = ".data/" + std::string(argv[2]) + "/config.txt";
+	std::string kinematicsFilename = ".data/" + folderName + "/kinematics.txt";
+	std::string dynamicsFilename = ".data/" + folderName + "/dynamics.txt";
+	std::string configFilename = ".data/" + folderName + "/config.txt";
 	std::ofstream kinematicsFile(kinematicsFilename);
 	std::ofstream dynamicsFile(dynamicsFilename);
 	std::ofstream configFile(configFilename);
 
 	//Config File Writing
-	configFile << "Master Master Teleop with Gravity Compensation and Sinusoidal External Torque.\n";
+	configFile << "Master Master Teleop with Gravity Compensation and Sinusoidal External Torque-Leader.\n";
 	configFile << "Kinematics data: time, desired joint pos, feedback joint pos, desired joint vel, feedback joint vel, desired joint acc, feedback joint acc.\n";
 	configFile << "Dynamics data: time, wam joint torque input, wam gravity input, inverse dynamic, applied external torque.\n";
 	configFile << "Joint Position PID Controller: \nkp: " << wam.jpController.getKp() << "\nki: " << wam.jpController.getKi()<<  "\nkd: "<< wam.jpController.getKd() <<"\nControl Signal Limit: " << wam.jpController.getControlSignalLimit() <<".\n";
 	configFile << "Sync Pos:" << SYNC_POS;
 	// configFile << "\nDesired Joint Vel Saturation Limit: " << jvLimits;
-	// configFile << "\nDesired Joint Acc Saturation Limit: " << jaLimits;
+	// configFile << "\nDesired Joint Acc Saturation Limit: " << jaLimits
 	// configFile << "\nCurrent Joint Acc Saturation Limit: " << jaLimits;
 	configFile << "\nHigh Pass Filter Frq used to get desired vel and acc:" << h_omega_p;
 	configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega;
 	configFile << "\nTanh Coeef in Dynamics:" << coeff;
-    	configFile << "\nFrequency and amplitude for the applied external torque: F:" << f << "A: " << A;
+	configFile << "\nFrequency and amplitude for the applied external torque: F:" << f << "A: " << A;
 
 	log::Reader<tuple_type_kinematics> lr_kinematics(tmpFile_kinematics);
 	lr_kinematics.exportCSV(kinematicsFile);
 	log::Reader<tuple_type_dynamics> lr_Dynamics(tmpFile_dynamics);
 	lr_Dynamics.exportCSV(dynamicsFile);
 	configFile.close();
-	printf("Output written to %s folder.\n", argv[2]);
+	printf("Output written to %s folder.\n", folderName);
 
 	std::remove(tmpFile_kinematics);
 	std::remove(tmpFile_dynamics);
