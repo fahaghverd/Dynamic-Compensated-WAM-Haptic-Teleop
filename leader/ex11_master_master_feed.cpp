@@ -45,6 +45,53 @@ bool validate_args(int argc, char** argv) {
 	return true;
 }
 
+// Function to split a string by a delimiter and return a vector of the elements
+std::vector<std::string> split(const std::string& str, char delimiter) {
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(str);
+    while (std::getline(tokenStream, token, delimiter)) {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
+// Merged function to get an Eigen::VectorXd from an environment variable
+template <size_t DOF>
+math::Matrix<DOF, 1, double> getEnvEigenVector(const std::string& varName, const math::Matrix<DOF, 1, double>& defaultValue) {
+    const char* envVar = std::getenv(varName.c_str());
+    if (envVar) {
+        std::vector<std::string> stringElements = split(envVar, ',');
+        Eigen::VectorXd eigenVec(stringElements.size());
+        for (size_t i = 0; i < stringElements.size(); ++i) {
+            std::istringstream iss(stringElements[i]);
+            double value;
+            if (iss >> value) {
+                eigenVec(i) = value;
+            } else {
+                std::cerr << "Invalid value in vector for " << varName << std::endl;
+                return defaultValue;
+            }
+        }
+        return eigenVec;
+    }
+    return defaultValue;
+}
+
+// Function to get a double parameter from an environment variable or return a default value
+double getEnvDouble(const std::string& varName, double defaultValue) {
+    const char* envVar = std::getenv(varName.c_str());
+    if (envVar) {
+        std::istringstream iss(envVar);
+        double value;
+        if (iss >> value) {
+            return value;
+        } else {
+            std::cerr << "Invalid double value for " << varName << std::endl;
+        }
+    }
+    return defaultValue;
+}
 //Functions to saturate joint configs
 template <size_t DOF>
 typename units::JointVelocities<DOF>::type saturateJv(
@@ -111,34 +158,40 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	}
 
 	//Definning syn pos 
-	jp_type SYNC_POS; // the position each WAM should move to before linking
-    SYNC_POS[0] = -1.5;
-    SYNC_POS[1] = -0.01;
-    SYNC_POS[2] = 3.11;
+	jp_type SYNC_POS_default; // the position each WAM should move to before linking
+    SYNC_POS_default[0] = -1.5;
+    SYNC_POS_default[1] = -0.01;
+    SYNC_POS_default[2] = 3.11;
+	jp_type SYNC_POS = jp_type(getEnvEigenVector<DOF>("SYNC_POS", v_type(SYNC_POS)));
 
 	//Master Master System
 	MasterMaster<DOF> mm(pm.getExecutionManager(), argv[1]);
 	systems::connect(wam.jpOutput, mm.input);
 
 	//ID FeedFWD
-	double h_omega_p = 25.0;
+	double h_omega_p_default = 25.0;
+	double h_omega_p = getEnvDouble("h_omega", h_omega_p);
 	systems::FirstOrderFilter<jp_type> hp1;
 	hp1.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
 	systems::FirstOrderFilter<jp_type> hp2;
 	hp2.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
 	systems::Gain<jp_type, double, jv_type> jvDes(1.0);
 	systems::Gain<jp_type, double, ja_type> jaDes(1.0);
-	jv_type jvLimits;
-	jvLimits << 1.5, 1.5, 1.5;
+	jv_type jvLimits_default;
+	jvLimits_default << 1.5, 1.5, 1.5;
+	jv_type jvLimits = jv_type(getEnvEigenVector<DOF>("jv_limits", v_type(jvLimits_default)));
 	systems::Callback<jv_type> jvSat(boost::bind(saturateJv<DOF>,_1, jvLimits));
-	jv_type jaLimits;
-	jaLimits << 1.5, 1.5, 1.5;
+	jv_type jaLimits_default;
+	jaLimits_default << 1.5, 1.5, 1.5;
+	ja_type jaLimits = ja_type(getEnvEigenVector<DOF>("ja_limits", v_type(jaLimits_default)));
 	systems::Callback<ja_type> jaSat(boost::bind(saturateJa<DOF>,_1, jaLimits));
-	jt_type jtLimits;
-	jtLimits << 10, 10, 5;
+	jt_type jtLimits_default;
+	jaLimits_default << 10, 10, 5;
+	jt_type jtLimits = jt_type(getEnvEigenVector<DOF>("jtLimits", v_type(jtLimits_default)));
 	systems::Callback<jt_type> feedSat(boost::bind(saturateJt<DOF>,_1, jtLimits));
 	systems::Ramp time(pm.getExecutionManager(), 1.0);
-	double coeff = 0.1;
+	double coeff_default = 0.1;
+	double coeff = getEnvDouble("coeff_tanh", coeff_default);
 	Dynamics<DOF> feedFWD(coeff); 
 
 	connect(mm.output, hp1.input);
@@ -156,9 +209,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	
 	//ID for arm dynamics
 	Dynamics<DOF> inverseDyn(coeff);
-	double h_omega = 25.0;
 	systems::FirstOrderFilter<jv_type> hp;
-	hp.setHighPass(jv_type(h_omega), jv_type(h_omega));
+	hp.setHighPass(jv_type(h_omega_p), jv_type(h_omega_p));
 	systems::Gain<jv_type, double, ja_type> jaCur(1.0);
 
 	connect(wam.jvOutput, hp.input);
@@ -345,7 +397,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	configFile << "\nCurrent Joint Acc Saturation Limit: " << jaLimits;
 	configFile << "\nFeedFwd Torque Saturation Limit: " << jtLimits;
 	configFile << "\nHigh Pass Filter Frq used to get desired vel and acc:" << h_omega_p;
-	configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega;
+	configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega_p;
 	configFile << "\nTanh Coeef in Dynamics:" << coeff;
 
 	log::Reader<tuple_type_kinematics> lr_kinematics(tmpFile_kinematics);
@@ -353,7 +405,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	log::Reader<tuple_type_dynamics> lr_Dynamics(tmpFile_dynamics);
 	lr_Dynamics.exportCSV(dynamicsFile);
 	configFile.close();
-	printf("Output written to %s folder.\n", folderName);
+	printf("Output written to %s folder.\n", folderName.c_str());
 
 	std::remove(tmpFile_kinematics);
 	std::remove(tmpFile_dynamics);
