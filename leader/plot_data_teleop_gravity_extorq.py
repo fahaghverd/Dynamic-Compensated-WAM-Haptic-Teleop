@@ -155,6 +155,11 @@ def main(folder_name):
     kinematics_data = read_data(kinematics_file, kinematics_vars)
     dynamics_data = read_data(dynamics_file, dynamics_vars)
 
+    cal_extorq = dynamics_data[dynamics_vars[1]] - dynamics_data[dynamics_vars[2]] - dynamics_data[dynamics_vars[4]]
+    dynamics_data['calculated external torque'] = cal_extorq
+    dynamics_vars.append("calculated external torque")
+    print(dynamics_data)
+
     # Plot kinematics data
     if kinematics_data:
         plot_kinematics_data(kinematics_data[kinematics_vars[0]], kinematics_data, "Kinematics Data vs Time")
