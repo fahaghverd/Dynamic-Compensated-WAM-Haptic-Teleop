@@ -12,10 +12,10 @@ Eigen::Matrix<double,2 ,8> calculate_Y_matrix(const Eigen::Vector4d theta, Eigen
     Y.setZero(); // Initialize the matrix with zeros
     double g = 9.81;
     // double coeff = 1000;
-    thetad[0] = thetad[0]*tanh(coeff*abs(thetad[0]));
-    thetad[2] = thetad[2]*tanh(coeff*abs(thetad[2]));
-    thetadd[0] = thetadd[0]*tanh(coeff*abs(thetadd[0]));
-    thetadd[2] = thetadd[2]*tanh(coeff*abs(thetadd[2]));
+    // thetad[0] = thetad[0]*tanh(coeff*abs(thetad[0]));
+    // thetad[2] = thetad[2]*tanh(coeff*abs(thetad[2]));
+    // thetadd[0] = thetadd[0]*tanh(coeff*abs(thetadd[0]));
+    // thetadd[2] = thetadd[2]*tanh(coeff*abs(thetadd[2]));
     // Using 0-based indexing: theta[1] is theta2, theta[3] is theta4, and similarly for thetad and thetadd
     Y(0, 0) = 2.0 * cos(theta[2]) * thetad[2] * thetad[0] + cos(theta[2]) * pow(thetad[2], 2) + 2.0 * sin(theta[2]) * thetadd[0] + sin(theta[2]) * thetadd[2];
     Y(0, 1) = 2.0 * cos(theta[2]) * thetadd[0] - sin(theta[2]) * pow(thetad[2], 2) - 2.0 * sin(theta[2]) * thetad[2] * thetad[0] + cos(theta[2]) * thetadd[2];

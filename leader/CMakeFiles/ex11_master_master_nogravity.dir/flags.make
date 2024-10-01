@@ -6,5 +6,5 @@ CXX_FLAGS = -O2 -g -DNDEBUG
 
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/usr/include/eigen3 -I/home/funzi/Research/Dynamic-Compensated-WAM-Haptic-Teleop/leader/include 
+CXX_INCLUDES = -I/usr/local/include/eigen3 -I/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/include 
 

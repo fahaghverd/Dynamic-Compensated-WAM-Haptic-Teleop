@@ -17,11 +17,13 @@
 #include <sys/types.h> // For mode_t
 #include <boost/thread.hpp>
 
+#include <barrett/log.h>
 #include <barrett/os.h>
 #include <barrett/detail/stl_utils.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
 #include <barrett/products/product_manager.h>
+#include <Dynamics.hpp>
 
 #define BARRETT_SMF_VALIDATE_ARGS
 #include <barrett/standard_main_function.h>
@@ -44,6 +46,72 @@ bool validate_args(int argc, char** argv) {
 	return true;
 }
 
+
+//Split function
+std::vector<std::string> split(const std::string& str, char delimiter) {
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(str);
+    
+    // Manual splitting
+    while (std::getline(tokenStream, token)) {
+        size_t pos = 0;
+        std::string item;
+        while ((pos = token.find(delimiter)) != std::string::npos) {
+            item = token.substr(0, pos);
+            tokens.push_back(item);
+            token.erase(0, pos + 1);
+        }
+        // Add the last token
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
+// Merged function to get an Eigen::VectorXd from an environment variable
+template <size_t DOF>
+math::Matrix<DOF, 1, double> getEnvEigenVector(const std::string& varName, const math::Matrix<DOF, 1, double>& defaultValue) {
+    const char* envVar = std::getenv(varName.c_str());
+    if (envVar) {
+        std::vector<std::string> stringElements = split(envVar, ',');
+        
+        // If the size of the input doesn't match DOF, return the default value
+        if (stringElements.size() != DOF) {
+            std::cerr << "Vector size mismatch for " << varName << std::endl;
+            return defaultValue;
+        }
+
+        math::Matrix<DOF, 1, double> matrixVec;
+        for (size_t i = 0; i < stringElements.size(); ++i) {
+            std::istringstream iss(stringElements[i]);
+            double value;
+            if (iss >> value) {
+                matrixVec(i, 0) = value;  // Assuming math::Matrix supports (row, col) access
+            } else {
+                std::cerr << "Invalid value in vector for " << varName << std::endl;
+                return defaultValue;
+            }
+        }
+        return matrixVec;
+    }
+    return defaultValue;
+}
+
+// Function to get a double parameter from an environment variable or return a default value
+double getEnvDouble(const std::string& varName, double defaultValue) {
+    const char* envVar = std::getenv(varName.c_str());
+    if (envVar) {
+        std::istringstream iss(envVar);
+        double value;
+        if (iss >> value) {
+            return value;
+        } else {
+            std::cerr << "Invalid double value for " << varName << std::endl;
+        }
+    }
+    return defaultValue;
+}
+
 //string config_path = "/home/robot/catkin_ws/src/barrett-ros-pkg_zeusV/wam_bringup/launch/with_hand_config_teleop_gains/default.conf";
 template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
@@ -64,33 +132,40 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		return 1;
 	}
 
-    jp_type SYNC_POS; // the position each WAM should move to before linking
-    SYNC_POS[1] = -1.5;
-    SYNC_POS[2] = -0.01;
-    SYNC_POS[3] = 3.11;
+
+	//Definning syn pos 
+	jp_type SYNC_POS_default; // the position each WAM should move to before linking
+    SYNC_POS_default[1] = -1.5;
+    SYNC_POS_default[2] = -0.01;
+    SYNC_POS_default[3] = 3.11;
+	jp_type SYNC_POS = jp_type(getEnvEigenVector<DOF>("SYNC_POS", v_type(SYNC_POS_default)));
 
 	//Master Master System
 	MasterMaster<DOF> mm(pm.getExecutionManager(), argv[1]);
 	systems::connect(wam.jpOutput, mm.input);
 
 	//ID for arm dynamics
-    double coeff =0.1;
-    Dynamics<DOF> inverseDyn(coeff);
-	double h_omega = 25.0;
-	systems::FirstOrderFilter<jv_type> hp;
-	hp.setHighPass(jv_type(h_omega), jv_type(h_omega));
-	systems::Gain<jv_type, double, ja_type> jaCur(1.0);
+	double coeff_default = 0.1;
+	double coeff = getEnvDouble("coeff_tanh", coeff_default);
+	Dynamics<DOF> inverseDyn(coeff);
+	double h_omega_p_default = 25.0;
+	double h_omega_p = getEnvDouble("h_omega", h_omega_p_default);
+	systems::FirstOrderFilter<jp_type> hp3;
+	systems::FirstOrderFilter<jp_type> hp4;
+	hp3.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
+	hp4.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
+	systems::Gain<jp_type, double, ja_type> jaCur(1.0);
 
-    connect(wam.jvOutput, hp.input);
-	connect(hp.output, jaCur.input);
-	pm.getExecutionManager()->startManaging(hp);
+	connect(wam.jpOutput, hp3.input);
+	connect(hp3.output, hp4.input);
+	connect(hp4.output, jaCur.input);
+	pm.getExecutionManager()->startManaging(hp4);
 	sleep(1);
 	connect(wam.jpOutput, inverseDyn.jpInputDynamics); // should i connect this or from mm? if mm move it to the if
 	connect(wam.jvOutput, inverseDyn.jvInputDynamics);
     connect(jaCur.output, inverseDyn.jaInputDynamics);
     
     //Desired Vel and Acc
-    double h_omega_p = 25.0;
 	systems::FirstOrderFilter<jp_type> hp1;
 	hp1.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
 	systems::FirstOrderFilter<jp_type> hp2;
@@ -253,17 +328,16 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	}
     // Create the directory using mkdir() 
 	std::string folderName = argv[2];
-    if (mkdir(folderName.c_str(), 0777) == -1) {
+	std::string fullPath = ".data/" + folderName;
+    if (mkdir(fullPath.c_str(), 0777) == -1) {
         std::cerr << "Error: Could not create directory. It might already exist." << std::endl;
         return 1; // Exit the program if directory creation fails
     }
 
-	std::string kinematicsFilename = ".data/" + folderName + "/kinematics.txt";
-	std::string dynamicsFilename = ".data/" + folderName + "/dynamics.txt";
-	std::string configFilename = ".data/" + folderName + "/config.txt";
-	std::ofstream kinematicsFile(kinematicsFilename);
-	std::ofstream dynamicsFile(dynamicsFilename);
-	std::ofstream configFile(configFilename);
+	std::string kinematicsFileName = fullPath + "/kinematics.txt";
+	std::string dynamicsFileName = fullPath + "/dynamics.txt";
+	std::string configFileName = fullPath + "/config.txt";
+	std::ofstream configFile(configFileName.c_str());
 
 	//Config File Writing
 	configFile << "Master Master Teleop with Gravity Compensation-Follower.\n";
@@ -275,15 +349,15 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	// configFile << "\nDesired Joint Acc Saturation Limit: " << jaLimits;
 	// configFile << "\nCurrent Joint Acc Saturation Limit: " << jaLimits;
 	configFile << "\nHigh Pass Filter Frq used to get desired vel and acc:" << h_omega_p;
-	configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega;
+	configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega_p;
 	configFile << "\nTanh Coeef in Dynamics:" << coeff;
 
 	log::Reader<tuple_type_kinematics> lr_kinematics(tmpFile_kinematics);
-	lr_kinematics.exportCSV(kinematicsFile);
-	log::Reader<tuple_type_dynamics> lr_Dynamics(tmpFile_dynamics);
-	lr_Dynamics.exportCSV(dynamicsFile);
+	lr_kinematics.exportCSV(kinematicsFileName.c_str());
+	log::Reader<tuple_type_dynamics> lr_dynamics(tmpFile_dynamics);
+	lr_dynamics.exportCSV(dynamicsFileName.c_str());
 	configFile.close();
-	printf("Output written to %s folder.\n", folderName);
+	printf("Output written to %s folder.\n", folderName.c_str());
 
 	std::remove(tmpFile_kinematics);
 	std::remove(tmpFile_dynamics);

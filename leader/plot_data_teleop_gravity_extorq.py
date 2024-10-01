@@ -55,90 +55,174 @@ def read_data(file_path, variable_names):
         
     return data_dict
 
-def plot_kinematics_data(time, data, title):
+def plot_data(kinematics_data, dynamics_data, num_data):
+
     plt.figure(figsize=(12, 12))
 
+    kinematics_time = kinematics_data['time']
     # Subplot for Joint 2 Position
-    plt.subplot(3, 2, 1)
-    plt.plot(time, data['desired joint pos'][:, 0], label='Desired Joint 2 Position', linestyle='--')
-    plt.plot(time, data['feedback joint pos'][:, 0], label='Feedback Joint 2 Position', linestyle='-')
+    plt.subplot(num_data, 2, 1)
+    plt.plot(kinematics_time, kinematics_data['desired joint pos'][:, 0], label='Desired Joint 2 Position', linestyle='--')
+    plt.plot(kinematics_time, kinematics_data['feedback joint pos'][:, 0], label='Feedback Joint 2 Position', linestyle='-')
     plt.title('Joint 2 Position')
     plt.xlabel('Time (s)')
     plt.ylabel('Position')
     plt.legend()
 
     # Subplot for Joint 4 Position
-    plt.subplot(3, 2, 2)
-    plt.plot(time, data['desired joint pos'][:, 2], label='Desired Joint 4 Position', linestyle='--')
-    plt.plot(time, data['feedback joint pos'][:, 2], label='Feedback Joint 4 Position', linestyle='-')
+    plt.subplot(num_data, 2, 2)
+    plt.plot(kinematics_time, kinematics_data['desired joint pos'][:, 2], label='Desired Joint 4 Position', linestyle='--')
+    plt.plot(kinematics_time, kinematics_data['feedback joint pos'][:, 2], label='Feedback Joint 4 Position', linestyle='-')
     plt.title('Joint 4 Position')
     plt.xlabel('Time (s)')
     plt.ylabel('Position')
     plt.legend()
 
     # Subplot for Joint 2 Velocity
-    plt.subplot(3, 2, 3)
-    plt.plot(time, data['desired joint vel'][:, 0], label='Desired Joint 2 Velocity', linestyle='--')
-    plt.plot(time, data['feedback joint vel'][:, 0], label='Feedback Joint 2 Velocity', linestyle='-')
+    plt.subplot(num_data, 2, 3)
+    plt.plot(kinematics_time, kinematics_data['desired joint vel'][:, 0], label='Desired Joint 2 Velocity', linestyle='--')
+    plt.plot(kinematics_time, kinematics_data['feedback joint vel'][:, 0], label='Feedback Joint 2 Velocity', linestyle='-')
     plt.title('Joint 2 Velocity')
     plt.xlabel('Time (s)')
     plt.ylabel('Velocity')
     plt.legend()
 
     # Subplot for Joint 4 Velocity
-    plt.subplot(3, 2, 4)
-    plt.plot(time, data['desired joint vel'][:, 2], label='Desired Joint 4 Velocity', linestyle='--')
-    plt.plot(time, data['feedback joint vel'][:, 2], label='Feedback Joint 4 Velocity', linestyle='-')
+    plt.subplot(num_data, 2, 4)
+    plt.plot(kinematics_time, kinematics_data['desired joint vel'][:, 2], label='Desired Joint 4 Velocity', linestyle='--')
+    plt.plot(kinematics_time, kinematics_data['feedback joint vel'][:, 2], label='Feedback Joint 4 Velocity', linestyle='-')
     plt.title('Joint 4 Velocity')
     plt.xlabel('Time (s)')
     plt.ylabel('Velocity')
     plt.legend()
 
     # Subplot for Joint 2 Acceleration
-    plt.subplot(3, 2, 5)
-    plt.plot(time, data['desired joint acc'][:, 0], label='Desired Joint 2 Acceleration', linestyle='--')
-    plt.plot(time, data['feedback joint acc'][:, 0], label='Feedback Joint 2 Acceleration', linestyle='-')
+    plt.subplot(num_data, 2, 5)
+    plt.plot(kinematics_time, kinematics_data['desired joint acc'][:, 0], label='Desired Joint 2 Acceleration', linestyle='--')
+    plt.plot(kinematics_time, kinematics_data['feedback joint acc.'][:, 0], label='Feedback Joint 2 Acceleration', linestyle='-')
     plt.title('Joint 2 Acceleration')
     plt.xlabel('Time (s)')
     plt.ylabel('Acceleration')
     plt.legend()
 
     # Subplot for Joint 4 Acceleration
-    plt.subplot(3, 2, 6)
-    plt.plot(time, data['desired joint acc'][:, 2], label='Desired Joint 4 Acceleration', linestyle='--')
-    plt.plot(time, data['feedback joint acc'][:, 2], label='Feedback Joint 4 Acceleration', linestyle='-')
+    plt.subplot(num_data, 2, 6)
+    plt.plot(kinematics_time, kinematics_data['desired joint acc'][:, 2], label='Desired Joint 4 Acceleration', linestyle='--')
+    plt.plot(kinematics_time, kinematics_data['feedback joint acc.'][:, 2], label='Feedback Joint 4 Acceleration', linestyle='-')
     plt.title('Joint 4 Acceleration')
     plt.xlabel('Time (s)')
     plt.ylabel('Acceleration')
     plt.legend()
 
-    plt.tight_layout()
-    plt.suptitle(title, fontsize=16, y=1.02)
+    dynamics_time = dynamics_data['time']
+
+    plt.subplot(num_data, 2, 7)
+    plt.plot(dynamics_time, dynamics_data['wam joint torque input'][:, 0])
+    plt.title('Joint 2 WAM Torque Input')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Torque Input')
+
+    plt.subplot(num_data, 2, 8)
+    plt.plot(dynamics_time, dynamics_data['wam joint torque input'][:, 2])
+    plt.title('Joint 4 WAM Torque Input')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Torque Input')
+
+    plt.subplot(num_data, 2, 9)
+    plt.plot(dynamics_time, dynamics_data['wam gravity input'][:, 0])
+    plt.title('Joint 2 WAM Gravity Input')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Gravity Input')
+
+    plt.subplot(num_data, 2, 10)
+    plt.plot(dynamics_time, dynamics_data['wam gravity input'][:, 2])
+    plt.title('Joint 4 WAM Gravity Input')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Gravity Input')
+
+    plt.subplot(num_data, 2, 11)
+    plt.plot(dynamics_time, dynamics_data['inverse dynamic'][:, 0])
+    plt.title('Joint 2 WAM Inverse Dynamic')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Inverse Dynamic')
+
+    plt.subplot(num_data, 2, 12)
+    plt.plot(dynamics_time, dynamics_data['inverse dynamic'][:, 2])
+    plt.title('Joint 4 WAM Inverse Dynamic')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Inverse Dynamic')
+
+    plt.subplot(num_data, 2, 13)
+    plt.plot(dynamics_time, dynamics_data['applied external torque.'][:, 0], label='Applied Joint 2 External Torque', linestyle='--')
+    plt.plot(dynamics_time, dynamics_data['calculated external torque'][:, 0], label='Calculated Joint 2 External Torque', linestyle='-')
+    plt.title('Joint 2 External Torque')
+    plt.xlabel('Time (s)')
+    plt.ylabel('External Torque')
+    plt.legend()
+
+    plt.subplot(num_data, 2, 14)
+    plt.plot(dynamics_time, dynamics_data['applied external torque.'][:, 2], label='Applied Joint 4 External Torque', linestyle='--')
+    plt.plot(dynamics_time, dynamics_data['calculated external torque'][:, 2], label='Calculated Joint 4 External Torque', linestyle='-')
+    plt.title('Joint 4 External Torque')
+    plt.xlabel('Time (s)')
+    plt.ylabel('External Torque')
+    plt.legend()
+
     plt.show()
 
-def plot_dynamics_data(time, data, variable_names, title):
-    num_vars = len(variable_names) - 1  # Exclude time
-    plt.figure(figsize=(12, 3 * num_vars))
 
-    for i, var in enumerate(variable_names[1:]):  # Skip time
-        first_col = data[var][:, 0]  # Joint 2
-        third_col = data[var][:, 2]  # Joint 4
-        
-        plt.subplot(num_vars, 2, i * 2 + 1)  # First column (Joint 2)
-        plt.plot(time, first_col)  # Simplified without line style and marker
-        plt.title(f"{var} - Joint 2")
-        plt.xlabel("Time (s)")
-        plt.ylabel("Value")
-        
-        plt.subplot(num_vars, 2, i * 2 + 2)  # Second column (Joint 4)
-        plt.plot(time, third_col)  # Simplified without line style and marker
-        plt.title(f"{var} - Joint 4")
-        plt.xlabel("Time (s)")
-        plt.ylabel("Value")
+def calculate_nrmse(desired, feedback, normalization='range'):
+    """
+    Calculate the Normalized Root Mean Square Error (nRMSE).
 
-    plt.tight_layout()
-    plt.suptitle(title, fontsize=16, y=1.02)
-    plt.show()
+    Parameters:
+    desired (array-like): Desired values.
+    feedback (array-like): Feedback values.
+    normalization (str): 'range' to normalize by the range of desired values,
+                         'mean' to normalize by the mean of desired values.
+
+    Returns:
+    float: Normalized Root Mean Square Error.
+    """
+    # Calculate RMSE
+    rmse = np.sqrt(np.mean((desired - feedback) ** 2))
+    
+    # Normalize RMSE
+    if normalization == 'range':
+        range_desired = np.max(desired) - np.min(desired)
+        nrmse = rmse / range_desired if range_desired != 0 else float('inf')
+    elif normalization == 'mean':
+        mean_desired = np.mean(desired)
+        nrmse = rmse / mean_desired if mean_desired != 0 else float('inf')
+    else:
+        raise ValueError("Normalization method must be 'range' or 'mean'.")
+    
+    return nrmse
+
+def calculate_errors(kinematics_data, dynamics_data):
+    
+    pos_des_2 = kinematics_data['desired joint pos'][:, 0]
+    pos_feedback_2 = kinematics_data['feedback joint pos'][:, 0]
+    pos_nrmse_2 = calculate_nrmse(pos_des_2, pos_feedback_2)
+
+    pos_des_4 = kinematics_data['desired joint pos'][:, 2]
+    pos_feedback_4 = kinematics_data['feedback joint pos'][:, 2]
+    pos_nrmse_4 = calculate_nrmse(pos_des_4, pos_feedback_4)
+
+    applied_extorq_2 = dynamics_data['applied external torque.'][:, 0]
+    calculated_extorq_2 = dynamics_data['calculated external torque'][:, 0]
+    extorq_measurement_nrmse_2 = calculate_nrmse(applied_extorq_2, calculated_extorq_2)
+
+    applied_extorq_4 = dynamics_data['applied external torque.'][:, 2]
+    calculated_extorq_4 = dynamics_data['calculated external torque'][:, 2]
+    extorq_measurement_nrmse_4 = calculate_nrmse(applied_extorq_4, calculated_extorq_4)
+
+    print("pos_nrmse_2: ", pos_nrmse_2)
+    print("pos_nrmse_4: ", pos_nrmse_4)
+
+    print("extorq_measurement_nrmse_2: ", extorq_measurement_nrmse_2)
+    print("extorq_measurement_nrmse_4: ", extorq_measurement_nrmse_4)
+
 
 def main(folder_name):
     base_folder = './.data'  # Adjust this to your actual folder structure
@@ -155,18 +239,13 @@ def main(folder_name):
     kinematics_data = read_data(kinematics_file, kinematics_vars)
     dynamics_data = read_data(dynamics_file, dynamics_vars)
 
-    cal_extorq = dynamics_data[dynamics_vars[1]] - dynamics_data[dynamics_vars[2]] - dynamics_data[dynamics_vars[4]]
+    cal_extorq = dynamics_data[dynamics_vars[1]] - dynamics_data[dynamics_vars[2]] - dynamics_data[dynamics_vars[3]]
     dynamics_data['calculated external torque'] = cal_extorq
     dynamics_vars.append("calculated external torque")
-    print(dynamics_data)
-
-    # Plot kinematics data
-    if kinematics_data:
-        plot_kinematics_data(kinematics_data[kinematics_vars[0]], kinematics_data, "Kinematics Data vs Time")
-
-    # Plot dynamics data
-    if dynamics_data:
-        plot_dynamics_data(dynamics_data[dynamics_vars[0]], dynamics_data, dynamics_vars, "Dynamics Data vs Time")
+    num_data = 3 + len(dynamics_vars) - 1
+    
+    plot_data(kinematics_data, dynamics_data, num_data)
+    calculate_errors(kinematics_data, dynamics_data)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

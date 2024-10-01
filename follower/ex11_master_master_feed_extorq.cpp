@@ -45,6 +45,73 @@ bool validate_args(int argc, char** argv) {
 	return true;
 }
 
+
+//Split function
+std::vector<std::string> split(const std::string& str, char delimiter) {
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(str);
+    
+    // Manual splitting
+    while (std::getline(tokenStream, token)) {
+        size_t pos = 0;
+        std::string item;
+        while ((pos = token.find(delimiter)) != std::string::npos) {
+            item = token.substr(0, pos);
+            tokens.push_back(item);
+            token.erase(0, pos + 1);
+        }
+        // Add the last token
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
+// Merged function to get an Eigen::VectorXd from an environment variable
+template <size_t DOF>
+math::Matrix<DOF, 1, double> getEnvEigenVector(const std::string& varName, const math::Matrix<DOF, 1, double>& defaultValue) {
+    const char* envVar = std::getenv(varName.c_str());
+    if (envVar) {
+        std::vector<std::string> stringElements = split(envVar, ',');
+        
+        // If the size of the input doesn't match DOF, return the default value
+        if (stringElements.size() != DOF) {
+            std::cerr << "Vector size mismatch for " << varName << std::endl;
+            return defaultValue;
+        }
+
+        math::Matrix<DOF, 1, double> matrixVec;
+        for (size_t i = 0; i < stringElements.size(); ++i) {
+            std::istringstream iss(stringElements[i]);
+            double value;
+            if (iss >> value) {
+                matrixVec(i, 0) = value;  // Assuming math::Matrix supports (row, col) access
+            } else {
+                std::cerr << "Invalid value in vector for " << varName << std::endl;
+                return defaultValue;
+            }
+        }
+        return matrixVec;
+    }
+    return defaultValue;
+}
+
+// Function to get a double parameter from an environment variable or return a default value
+double getEnvDouble(const std::string& varName, double defaultValue) {
+    const char* envVar = std::getenv(varName.c_str());
+    if (envVar) {
+        std::istringstream iss(envVar);
+        double value;
+        if (iss >> value) {
+            return value;
+        } else {
+            std::cerr << "Invalid double value for " << varName << std::endl;
+        }
+    }
+    return defaultValue;
+}
+
+
 template <size_t DOF>
 typename units::JointVelocities<DOF>::type saturateJv(
     const typename units::JointVelocities<DOF>::type& x,
@@ -145,35 +212,40 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		return 1;
 	}
 
-	jp_type SYNC_POS; // the position each WAM should move to before linking
-    SYNC_POS[1] = -0.2;
-    SYNC_POS[2] = 0.0;
-    SYNC_POS[3] = 0.0;
+	//Definning syn pos 
+	jp_type SYNC_POS_default; // the position each WAM should move to before linking
+    SYNC_POS_default[1] = -0.2;
+    SYNC_POS_default[2] = 0.00;
+    SYNC_POS_default[3] = 0.0;
+	jp_type SYNC_POS = jp_type(getEnvEigenVector<DOF>("SYNC_POS", v_type(SYNC_POS_default)));
 
 	//Master Master System
 	MasterMaster<DOF> mm(pm.getExecutionManager(), argv[1]);
 	systems::connect(wam.jpOutput, mm.input);
 
 	//ID FeedFWD
-	double h_omega_p = 15.0;
+	double h_omega_p_default = 25.0;
+	double h_omega_p = getEnvDouble("h_omega", h_omega_p_default);
 	systems::FirstOrderFilter<jp_type> hp1;
 	hp1.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
 	systems::FirstOrderFilter<jp_type> hp2;
 	hp2.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
 	systems::Gain<jp_type, double, jv_type> jvDes(1.0);
 	systems::Gain<jp_type, double, ja_type> jaDes(1.0);
-	jv_type jvLimits;
-	jvLimits << 0.1, 1.5, 1.5, 1.5, 0.1, 0.1, 0.1;
+	jv_type jvLimits_default;
+	jvLimits_default << 0.1, 1.5, 1.5, 1.5, 0.1, 0.1, 0.1;
+	jv_type jvLimits = jv_type(getEnvEigenVector<DOF>("jv_limits", v_type(10*jvLimits_default)));
 	systems::Callback<jv_type> jvSat(boost::bind(saturateJv<DOF>,_1, jvLimits));
-	jv_type jaLimits;
-	jaLimits << 0.1, 1.5, 1.5, 1.5, 0.1, 0.1, 0.1;
+	ja_type jaLimits_default;
+	jaLimits_default << 0.1, 1.5, 1.5, 1.5, 0.1, 0.1, 0.1;
+	ja_type jaLimits = ja_type(getEnvEigenVector<DOF>("ja_limits", v_type(10*jaLimits_default)));
 	systems::Callback<ja_type> jaSat(boost::bind(saturateJa<DOF>,_1, jaLimits));
-	systems::Callback<ja_type> jaSatCurr(boost::bind(saturateJa<DOF>,_1, jaLimits));
-	jt_type jtLimits;
-	jtLimits << 10, 10, 10, 10, 0, 0, 0;
+	jt_type jtLimits_default;	
+	jtLimits_default << 0.1, 15, 15, 10, 0.1, 0.1, 0.1;
+	jt_type jtLimits = jt_type(getEnvEigenVector<DOF>("jtLimits", v_type(jtLimits_default)));
 	systems::Callback<jt_type> feedSat(boost::bind(saturateJt<DOF>,_1, jtLimits));
-	systems::Ramp time(pm.getExecutionManager(), 1.0);
-	double coeff = 1.0;
+	double coeff_default = 0.1;
+	double coeff = getEnvDouble("coeff_tanh", coeff_default);
     Dynamics<DOF> feedFWD(coeff);
 
 	connect(mm.output, hp1.input);
@@ -189,26 +261,29 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	connect(jvSat.output, feedFWD.jvInputDynamics);
     connect(jaSat.output, feedFWD.jaInputDynamics);
 
-	//ID for arm
-	Dynamics<DOF> inverseDyn;
-	double h_omega = 15.0;
-	systems::FirstOrderFilter<jv_type> hp;
-	hp.setHighPass(jv_type(h_omega), jv_type(h_omega));
-	systems::Gain<jv_type, double, ja_type> jaCur(1.0);
+	//ID for arm dynamics
+	Dynamics<DOF> inverseDyn(coeff);
+	systems::FirstOrderFilter<jp_type> hp3;
+	systems::FirstOrderFilter<jp_type> hp4;
+	hp3.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
+	hp4.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
+	systems::Gain<jp_type, double, ja_type> jaCur(1.0);
 
-	connect(wam.jvOutput, hp.input);
-	connect(hp.output, jaCur.input);
-	connect(jaCur.output, jaSatCurr.input);
-	pm.getExecutionManager()->startManaging(hp);
+	connect(wam.jpOutput, hp3.input);
+	connect(hp3.output, hp4.input);
+	connect(hp4.output, jaCur.input);
+	pm.getExecutionManager()->startManaging(hp4);
 	sleep(1);
 	connect(wam.jpOutput, inverseDyn.jpInputDynamics); 
 	connect(wam.jvOutput, inverseDyn.jvInputDynamics);
-    connect(jaSatCurr.output, inverseDyn.jaInputDynamics);
+    connect(jaCur.output, inverseDyn.jaInputDynamics);
 
 	//Applied External Torque
-	jt_type A;
-	A << 0.0, 0.0, 0.0, 0.0;
-	double f = 0.5;
+	jt_type A_default;
+	A_default << -2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+	jt_type A = jt_type(getEnvEigenVector<DOF>("A", v_type(A_default)));
+	double f_default = 0.5;
+	double f = getEnvDouble("f", f_default);
 	sinextorq<DOF> extorqFeedFWD(A, f);
 	systems::Summer<jt_type, 2> feedFwdSum;
 	systems::Ramp time(pm.getExecutionManager(), 1.0);
@@ -280,10 +355,10 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				btsleep(0.1);  // wait an execution cycle or two
 				if (mm.isLinked()) {
 					printf("Linked with remote WAM.\n");
-					timelog.start();
+					
 					connect(tg_kinematics.output, logger_kinematics.input);
 					connect(tg_dynamics.output, logger_dynamics.input);
-					printf("Logging started.\n");
+					
 				} else {
 					printf("WARNING: Linking was unsuccessful.\n");
 				}
@@ -291,10 +366,17 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				//Applying External Torque
 				time.stop();
 				time.reset();
+				timelog.start();
+				printf("Logging started.\n");
 				time.start();
 				btsleep((2/f));
 				time.stop();
 				time.reset();
+				logger_kinematics.closeLog();
+				logger_dynamics.closeLog();
+				printf("Logging stopped.\n");
+				timelog.stop();
+				timelog.reset();
 			}
 
 			break;
@@ -356,11 +438,6 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		}
 
 		case 's':{
-				logger_kinematics.closeLog();
-				logger_dynamics.closeLog();
-				printf("Logging stopped.\n");
-				timelog.stop();
-				timelog.reset();
 				exit_called = true; 
 				break;
 		}
@@ -385,13 +462,11 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	std::string kinematicsFilename = ".data/" + folderName + "/kinematics.txt";
 	std::string dynamicsFilename = ".data/" + folderName + "/dynamics.txt";
 	std::string configFilename = ".data/" + folderName + "/config.txt";
-	std::ofstream kinematicsFile(kinematicsFilename);
-	std::ofstream dynamicsFile(dynamicsFilename);
-	std::ofstream configFile(configFilename);
+	std::ofstream configFile(configFilename.c_str());
 
 	//Config File Writing
 	configFile << "Master Master Teleop with Dynamic Compensation and Sinusoidal External Torque-Follower.\n";
-	configFile << "Kinematics data: time, desired joint pos, feedback joint pos, desired joint vel, feedback joint vel, desired joint acc, feedback joint acc.\n";
+	configFile << "Kinematics data: time, desired joint pos, feedback joint pos, desired joint vel, feedback joint vel, desired joint acc, feedback joint acc, jaccobian\n";
 	configFile << "Dynamics data: time, wam joint torque input, wam gravity input, dynamic feed forward, inverse dynamic, applied external torque.\n";
 	configFile << "Joint Position PID Controller: \nkp: " << wam.jpController.getKp() << "\nki: " << wam.jpController.getKi()<<  "\nkd: "<< wam.jpController.getKd() <<"\nControl Signal Limit: " << wam.jpController.getControlSignalLimit() <<".\n";
 	configFile << "Sync Pos:" << SYNC_POS;
@@ -400,16 +475,16 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	configFile << "\nCurrent Joint Acc Saturation Limit: " << jaLimits;
 	configFile << "\nFeedFwd Torque Saturation Limit: " << jtLimits;
 	configFile << "\nHigh Pass Filter Frq used to get desired vel and acc:" << h_omega_p;
-	configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega;
+	configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega_p;
 	configFile << "\nTanh Coeef in Dynamics:" << coeff;
-	configFile << "\nFrequency and amplitude for the applied external torque: F:" << f << "A: " << A;
+	configFile << "\nFrequency and amplitude for the applied external torque: F:" << f << "A: " << A << std::endl;
 
 	log::Reader<tuple_type_kinematics> lr_kinematics(tmpFile_kinematics);
-	lr_kinematics.exportCSV(kinematicsFile);
+	lr_kinematics.exportCSV(kinematicsFilename.c_str());
 	log::Reader<tuple_type_dynamics> lr_Dynamics(tmpFile_dynamics);
-	lr_Dynamics.exportCSV(dynamicsFile);
+	lr_Dynamics.exportCSV(dynamicsFilename.c_str());
 	configFile.close();
-	printf("Output written to %s folder.\n", argv[2]);
+	printf("Output written to %s folder.\n", folderName.c_str());
 
 	std::remove(tmpFile_kinematics);
 	std::remove(tmpFile_dynamics);

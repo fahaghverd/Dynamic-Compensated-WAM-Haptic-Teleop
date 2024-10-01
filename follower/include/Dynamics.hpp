@@ -41,8 +41,8 @@ protected:
 
 public:
 	explicit Dynamics(double coeff/*systems::ExecutionManager* em*/) :
-			tanh_coeff(coeff), jpInputDynamics(this), jvInputDynamics(this), jaInputDynamics(this), dynamicsFeedFWD(this,
-					&dynamicsFeedFWDValue) {
+			jpInputDynamics(this), jvInputDynamics(this), jaInputDynamics(this), dynamicsFeedFWD(this,
+					&dynamicsFeedFWDValue), tanh_coeff(coeff) {
 	//		      em->startManaging(*this);
 //		    }
 	}

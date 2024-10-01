@@ -55,90 +55,105 @@ def read_data(file_path, variable_names):
         
     return data_dict
 
-def plot_kinematics_data(time, data, title):
+def plot_data(kinematics_data, dynamics_data, num_data):
+
     plt.figure(figsize=(12, 12))
 
+    kinematics_time = kinematics_data['time']
     # Subplot for Joint 2 Position
-    plt.subplot(3, 2, 1)
-    plt.plot(time, data['desired joint pos'][:, 0], label='Desired Joint 2 Position', linestyle='--')
-    plt.plot(time, data['feedback joint pos'][:, 0], label='Feedback Joint 2 Position', linestyle='-')
+    plt.subplot(num_data, 2, 1)
+    plt.plot(kinematics_time, kinematics_data['desired joint pos'][:, 0], label='Desired Joint 2 Position', linestyle='--')
+    plt.plot(kinematics_time, kinematics_data['feedback joint pos'][:, 0], label='Feedback Joint 2 Position', linestyle='-')
     plt.title('Joint 2 Position')
     plt.xlabel('Time (s)')
     plt.ylabel('Position')
     plt.legend()
 
     # Subplot for Joint 4 Position
-    plt.subplot(3, 2, 2)
-    plt.plot(time, data['desired joint pos'][:, 2], label='Desired Joint 4 Position', linestyle='--')
-    plt.plot(time, data['feedback joint pos'][:, 2], label='Feedback Joint 4 Position', linestyle='-')
+    plt.subplot(num_data, 2, 2)
+    plt.plot(kinematics_time, kinematics_data['desired joint pos'][:, 2], label='Desired Joint 4 Position', linestyle='--')
+    plt.plot(kinematics_time, kinematics_data['feedback joint pos'][:, 2], label='Feedback Joint 4 Position', linestyle='-')
     plt.title('Joint 4 Position')
     plt.xlabel('Time (s)')
     plt.ylabel('Position')
     plt.legend()
 
     # Subplot for Joint 2 Velocity
-    plt.subplot(3, 2, 3)
-    plt.plot(time, data['desired joint vel'][:, 0], label='Desired Joint 2 Velocity', linestyle='--')
-    plt.plot(time, data['feedback joint vel'][:, 0], label='Feedback Joint 2 Velocity', linestyle='-')
+    plt.subplot(num_data, 2, 3)
+    plt.plot(kinematics_time, kinematics_data['desired joint vel'][:, 0], label='Desired Joint 2 Velocity', linestyle='--')
+    plt.plot(kinematics_time, kinematics_data['feedback joint vel'][:, 0], label='Feedback Joint 2 Velocity', linestyle='-')
     plt.title('Joint 2 Velocity')
     plt.xlabel('Time (s)')
     plt.ylabel('Velocity')
     plt.legend()
 
     # Subplot for Joint 4 Velocity
-    plt.subplot(3, 2, 4)
-    plt.plot(time, data['desired joint vel'][:, 2], label='Desired Joint 4 Velocity', linestyle='--')
-    plt.plot(time, data['feedback joint vel'][:, 2], label='Feedback Joint 4 Velocity', linestyle='-')
+    plt.subplot(num_data, 2, 4)
+    plt.plot(kinematics_time, kinematics_data['desired joint vel'][:, 2], label='Desired Joint 4 Velocity', linestyle='--')
+    plt.plot(kinematics_time, kinematics_data['feedback joint vel'][:, 2], label='Feedback Joint 4 Velocity', linestyle='-')
     plt.title('Joint 4 Velocity')
     plt.xlabel('Time (s)')
     plt.ylabel('Velocity')
     plt.legend()
 
     # Subplot for Joint 2 Acceleration
-    plt.subplot(3, 2, 5)
-    plt.plot(time, data['desired joint acc'][:, 0], label='Desired Joint 2 Acceleration', linestyle='--')
-    plt.plot(time, data['feedback joint acc'][:, 0], label='Feedback Joint 2 Acceleration', linestyle='-')
+    plt.subplot(num_data, 2, 5)
+    plt.plot(kinematics_time, kinematics_data['desired joint acc'][:, 0], label='Desired Joint 2 Acceleration', linestyle='--')
+    plt.plot(kinematics_time, kinematics_data['feedback joint acc.'][:, 0], label='Feedback Joint 2 Acceleration', linestyle='-')
     plt.title('Joint 2 Acceleration')
     plt.xlabel('Time (s)')
     plt.ylabel('Acceleration')
     plt.legend()
 
     # Subplot for Joint 4 Acceleration
-    plt.subplot(3, 2, 6)
-    plt.plot(time, data['desired joint acc'][:, 2], label='Desired Joint 4 Acceleration', linestyle='--')
-    plt.plot(time, data['feedback joint acc'][:, 2], label='Feedback Joint 4 Acceleration', linestyle='-')
+    plt.subplot(num_data, 2, 6)
+    plt.plot(kinematics_time, kinematics_data['desired joint acc'][:, 2], label='Desired Joint 4 Acceleration', linestyle='--')
+    plt.plot(kinematics_time, kinematics_data['feedback joint acc.'][:, 2], label='Feedback Joint 4 Acceleration', linestyle='-')
     plt.title('Joint 4 Acceleration')
     plt.xlabel('Time (s)')
     plt.ylabel('Acceleration')
     plt.legend()
 
-    plt.tight_layout()
-    plt.suptitle(title, fontsize=16, y=1.02)
+    dynamics_time = dynamics_data['time']
+
+    plt.subplot(num_data, 2, 7)
+    plt.plot(dynamics_time, dynamics_data['wam joint torque input'][:, 0])
+    plt.title('Joint 2 WAM Torque Input')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Torque Input')
+
+    plt.subplot(num_data, 2, 8)
+    plt.plot(dynamics_time, dynamics_data['wam joint torque input'][:, 2])
+    plt.title('Joint 4 WAM Torque Input')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Torque Input')
+
+    plt.subplot(num_data, 2, 9)
+    plt.plot(dynamics_time, dynamics_data['wam gravity input'][:, 0])
+    plt.title('Joint 2 WAM Gravity Input')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Gravity Input')
+
+    plt.subplot(num_data, 2, 10)
+    plt.plot(dynamics_time, dynamics_data['wam gravity input'][:, 2])
+    plt.title('Joint 4 WAM Gravity Input')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Gravity Input')
+
+    plt.subplot(num_data, 2, 11)
+    plt.plot(dynamics_time, dynamics_data['inverse dynamic.'][:, 0])
+    plt.title('Joint 2 WAM Inverse Dynamic')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Inverse Dynamic')
+
+    plt.subplot(num_data, 2, 12)
+    plt.plot(dynamics_time, dynamics_data['inverse dynamic.'][:, 2])
+    plt.title('Joint 4 WAM Inverse Dynamic')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Inverse Dynamic')
+
     plt.show()
 
-def plot_dynamics_data(time, data, variable_names, title):
-    num_vars = len(variable_names) - 1  # Exclude time
-    plt.figure(figsize=(12, 3 * num_vars))
-
-    for i, var in enumerate(variable_names[1:]):  # Skip time
-        first_col = data[var][:, 0]  # Joint 2
-        third_col = data[var][:, 2]  # Joint 4
-        
-        plt.subplot(num_vars, 2, i * 2 + 1)  # First column (Joint 2)
-        plt.plot(time, first_col)  # Simplified without line style and marker
-        plt.title(f"{var} - Joint 2")
-        plt.xlabel("Time (s)")
-        plt.ylabel("Value")
-        
-        plt.subplot(num_vars, 2, i * 2 + 2)  # Second column (Joint 4)
-        plt.plot(time, third_col)  # Simplified without line style and marker
-        plt.title(f"{var} - Joint 4")
-        plt.xlabel("Time (s)")
-        plt.ylabel("Value")
-
-    plt.tight_layout()
-    plt.suptitle(title, fontsize=16, y=1.02)
-    plt.show()
 
 def main(folder_name):
     base_folder = './.data'  # Adjust this to your actual folder structure
@@ -154,14 +169,9 @@ def main(folder_name):
     # Read data from kinematics and dynamics files
     kinematics_data = read_data(kinematics_file, kinematics_vars)
     dynamics_data = read_data(dynamics_file, dynamics_vars)
+    num_data = 3 + len(dynamics_vars) - 1
 
-    # Plot kinematics data
-    if kinematics_data:
-        plot_kinematics_data(kinematics_data[kinematics_vars[0]], kinematics_data, "Kinematics Data vs Time")
-
-    # Plot dynamics data
-    if dynamics_data:
-        plot_dynamics_data(dynamics_data[dynamics_vars[0]], dynamics_data, dynamics_vars, "Dynamics Data vs Time")
+    plot_data(kinematics_data, dynamics_data, num_data)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

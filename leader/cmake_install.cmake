@@ -1,4 +1,4 @@
-# Install script for directory: /home/funzi/Research/Dynamic-Compensated-WAM-Haptic-Teleop/leader
+# Install script for directory: /home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/funzi/Research/Dynamic-Compensated-WAM-Haptic-Teleop/leader/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

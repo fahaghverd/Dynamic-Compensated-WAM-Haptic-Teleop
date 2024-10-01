@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/funzi/Research/Dynamic-Compensated-WAM-Haptic-Teleop/leader/ex11_master_master_nogravity.cpp
+/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/ex11_master_master_nogravity.cpp
 iostream
 -
 string
@@ -28,7 +28,7 @@ barrett/units.h
 barrett/standard_main_function.h
 -
 ex11_master_master.h
-/home/funzi/Research/Dynamic-Compensated-WAM-Haptic-Teleop/leader/ex11_master_master.h
+/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/ex11_master_master.h
 
 include/ex11_master_master.h
 stdexcept

@@ -92,6 +92,7 @@ double getEnvDouble(const std::string& varName, double defaultValue) {
     }
     return defaultValue;
 }
+
 //Functions to saturate joint configs
 template <size_t DOF>
 typename units::JointVelocities<DOF>::type saturateJv(
@@ -162,7 +163,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
     SYNC_POS_default[0] = -1.5;
     SYNC_POS_default[1] = -0.01;
     SYNC_POS_default[2] = 3.11;
-	jp_type SYNC_POS = jp_type(getEnvEigenVector<DOF>("SYNC_POS", v_type(SYNC_POS)));
+	jp_type SYNC_POS = jp_type(getEnvEigenVector<DOF>("SYNC_POS", v_type(SYNC_POS_default)));
 
 	//Master Master System
 	MasterMaster<DOF> mm(pm.getExecutionManager(), argv[1]);
@@ -170,7 +171,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	//ID FeedFWD
 	double h_omega_p_default = 25.0;
-	double h_omega_p = getEnvDouble("h_omega", h_omega_p);
+	double h_omega_p = getEnvDouble("h_omega", h_omega_p_default);
 	systems::FirstOrderFilter<jp_type> hp1;
 	hp1.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
 	systems::FirstOrderFilter<jp_type> hp2;
@@ -179,14 +180,14 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	systems::Gain<jp_type, double, ja_type> jaDes(1.0);
 	jv_type jvLimits_default;
 	jvLimits_default << 1.5, 1.5, 1.5;
-	jv_type jvLimits = jv_type(getEnvEigenVector<DOF>("jv_limits", v_type(jvLimits_default)));
+	jv_type jvLimits = jv_type(getEnvEigenVector<DOF>("jv_limits", v_type(10*jvLimits_default)));
 	systems::Callback<jv_type> jvSat(boost::bind(saturateJv<DOF>,_1, jvLimits));
 	jv_type jaLimits_default;
 	jaLimits_default << 1.5, 1.5, 1.5;
-	ja_type jaLimits = ja_type(getEnvEigenVector<DOF>("ja_limits", v_type(jaLimits_default)));
+	ja_type jaLimits = ja_type(getEnvEigenVector<DOF>("ja_limits", v_type(10*jaLimits_default)));
 	systems::Callback<ja_type> jaSat(boost::bind(saturateJa<DOF>,_1, jaLimits));
 	jt_type jtLimits_default;
-	jaLimits_default << 10, 10, 5;
+	jtLimits_default << 10, 10, 5;
 	jt_type jtLimits = jt_type(getEnvEigenVector<DOF>("jtLimits", v_type(jtLimits_default)));
 	systems::Callback<jt_type> feedSat(boost::bind(saturateJt<DOF>,_1, jtLimits));
 	systems::Ramp time(pm.getExecutionManager(), 1.0);
@@ -209,15 +210,18 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	
 	//ID for arm dynamics
 	Dynamics<DOF> inverseDyn(coeff);
-	systems::FirstOrderFilter<jv_type> hp;
-	hp.setHighPass(jv_type(h_omega_p), jv_type(h_omega_p));
-	systems::Gain<jv_type, double, ja_type> jaCur(1.0);
+	systems::FirstOrderFilter<jp_type> hp3;
+	systems::FirstOrderFilter<jp_type> hp4;
+	hp3.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
+	hp4.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
+	systems::Gain<jp_type, double, ja_type> jaCur(1.0);
 
-	connect(wam.jvOutput, hp.input);
-	connect(hp.output, jaCur.input);
-	pm.getExecutionManager()->startManaging(hp);
+	connect(wam.jpOutput, hp3.input);
+	connect(hp3.output, hp4.input);
+	connect(hp4.output, jaCur.input);
+	pm.getExecutionManager()->startManaging(hp4);
 	sleep(1);
-	connect(wam.jpOutput, inverseDyn.jpInputDynamics);
+	connect(wam.jpOutput, inverseDyn.jpInputDynamics); 
 	connect(wam.jvOutput, inverseDyn.jvInputDynamics);
     connect(jaCur.output, inverseDyn.jaInputDynamics);
 	
@@ -407,8 +411,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	configFile.close();
 	printf("Output written to %s folder.\n", folderName.c_str());
 
-	std::remove(tmpFile_kinematics);
-	std::remove(tmpFile_dynamics);
+	unlink(tmpFile_kinematics);
+	unlink(tmpFile_dynamics);
 	
 	return 0;
 }

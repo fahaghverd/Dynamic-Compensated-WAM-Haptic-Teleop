@@ -31,9 +31,6 @@
 using namespace barrett;
 using detail::waitForEnter;
 
-void ghcEntryPoint(GimbalsHandController *ghc, const char *remoteHost);
-void handEntryPoint(Hand *hand, const char *remoteHost);
-
 bool validate_args(int argc, char **argv) {
     if (argc != 2 && argc != 3) {
         printf("Usage: %s <remoteHost> [--auto]\n", argv[0]);
@@ -43,6 +40,55 @@ bool validate_args(int argc, char **argv) {
     }
 
     return true;
+}
+
+
+// Function to split a string by a delimiter and return a vector of the elements
+std::vector<std::string> split(const std::string& str, char delimiter) {
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(str);
+    while (std::getline(tokenStream, token, delimiter)) {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
+// Merged function to get an Eigen::VectorXd from an environment variable
+template <size_t DOF>
+math::Matrix<DOF, 1, double> getEnvEigenVector(const std::string& varName, const math::Matrix<DOF, 1, double>& defaultValue) {
+    const char* envVar = std::getenv(varName.c_str());
+    if (envVar) {
+        std::vector<std::string> stringElements = split(envVar, ',');
+        Eigen::VectorXd eigenVec(stringElements.size());
+        for (size_t i = 0; i < stringElements.size(); ++i) {
+            std::istringstream iss(stringElements[i]);
+            double value;
+            if (iss >> value) {
+                eigenVec(i) = value;
+            } else {
+                std::cerr << "Invalid value in vector for " << varName << std::endl;
+                return defaultValue;
+            }
+        }
+        return eigenVec;
+    }
+    return defaultValue;
+}
+
+// Function to get a double parameter from an environment variable or return a default value
+double getEnvDouble(const std::string& varName, double defaultValue) {
+    const char* envVar = std::getenv(varName.c_str());
+    if (envVar) {
+        std::istringstream iss(envVar);
+        double value;
+        if (iss >> value) {
+            return value;
+        } else {
+            std::cerr << "Invalid double value for " << varName << std::endl;
+        }
+    }
+    return defaultValue;
 }
 
 template <size_t DOF> int wam_main(int argc, char **argv, ProductManager &pm, systems::Wam<DOF> &wam) {
@@ -63,33 +109,39 @@ template <size_t DOF> int wam_main(int argc, char **argv, ProductManager &pm, sy
 		return 1;
 	}
 
-    jp_type SYNC_POS; // the position each WAM should move to before linking
-    SYNC_POS[0] = -1.5;
-    SYNC_POS[1] = -0.01;
-    SYNC_POS[2] = 3.11;
+
+	//Definning syn pos 
+	jp_type SYNC_POS_default; // the position each WAM should move to before linking
+    SYNC_POS_default[1] = -1.5;
+    SYNC_POS_default[2] = -0.01;
+    SYNC_POS_default[3] = 3.11;
+	jp_type SYNC_POS = jp_type(getEnvEigenVector<DOF>("SYNC_POS", v_type(SYNC_POS_default)));
 
     //Master Master System
     MasterMaster<DOF> mm(pm.getExecutionManager(), argv[1]);
     systems::connect(wam.jpOutput, mm.input);
 
     //ID for arm dynamics
-    double coeff =0.1;
+	double coeff_default = 1000;
+	double coeff = getEnvDouble("coeff_tanh", coeff_default);
     Dynamics<DOF> inverseDyn(coeff);
-	double h_omega = 25.0;
-	systems::FirstOrderFilter<jv_type> hp;
-	hp.setHighPass(jv_type(h_omega), jv_type(h_omega));
-	systems::Gain<jv_type, double, ja_type> jaCur(1.0);
+	double h_omega_p_default = 25.0;
+	double h_omega_p = getEnvDouble("h_omega", h_omega_p_default);
+	systems::FirstOrderFilter<jp_type> hp3;
+	systems::FirstOrderFilter<jp_type> hp4;
+	hp3.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
+	hp4.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
+	systems::Gain<jp_type, double, ja_type> jaCur(1.0);
 
-    connect(wam.jvOutput, hp.input);
-	connect(hp.output, jaCur.input);
-	pm.getExecutionManager()->startManaging(hp);
+	connect(wam.jpOutput, hp3.input);
+	connect(hp3.output, hp4.input);
+	connect(hp4.output, jaCur.input);
+	pm.getExecutionManager()->startManaging(hp4);
 	sleep(1);
-	connect(wam.jpOutput, inverseDyn.jpInputDynamics); // should i connect this or from mm? if mm move it to the if
+	connect(wam.jpOutput, inverseDyn.jpInputDynamics);
 	connect(wam.jvOutput, inverseDyn.jvInputDynamics);
     connect(jaCur.output, inverseDyn.jaInputDynamics);
-    
     //Desired Vel and Acc
-    double h_omega_p = 25.0;
 	systems::FirstOrderFilter<jp_type> hp1;
 	hp1.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
 	systems::FirstOrderFilter<jp_type> hp2;
@@ -281,7 +333,7 @@ template <size_t DOF> int wam_main(int argc, char **argv, ProductManager &pm, sy
 	// configFile << "\nDesired Joint Acc Saturation Limit: " << jaLimits;
 	// configFile << "\nCurrent Joint Acc Saturation Limit: " << jaLimits;
 	configFile << "\nHigh Pass Filter Frq used to get desired vel and acc:" << h_omega_p;
-	configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega;
+	configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega_p;
 	configFile << "\nTanh Coeef in Dynamics:" << coeff;
 
 	log::Reader<tuple_type_kinematics> lr_kinematics(tmpFile_kinematics);
@@ -289,10 +341,10 @@ template <size_t DOF> int wam_main(int argc, char **argv, ProductManager &pm, sy
 	log::Reader<tuple_type_dynamics> lr_Dynamics(tmpFile_dynamics);
 	lr_Dynamics.exportCSV(dynamicsFile);
 	configFile.close();
-	printf("Output written to %s folder.\n", folderName[2]);
+	printf("Output written to %s folder.\n", folderName.c_str());
 
-	std::remove(tmpFile_kinematics);
-	std::remove(tmpFile_dynamics);
+	unlink(tmpFile_kinematics);
+	unlink(tmpFile_dynamics);
 
     return 0;
 }
