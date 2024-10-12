@@ -1,6 +1,9 @@
-/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles/rebuild_cache.dir
+/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles/ex11_master_master_feed_full_extorq.dir
+/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles/ex11_master_master_feed_full.dir
 /home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles/ex11_master_master_nogravity.dir
-/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles/ex11_master_master_feed_extorq.dir
+/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles/ex11_master_master_ID_feed_extorq.dir
+/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles/rebuild_cache.dir
+/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles/ex11_master_master_ctc_feed_extorq.dir
 /home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles/ex11_master_master_feed.dir
 /home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles/ex11_master_master_gravity.dir
 /home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles/edit_cache.dir

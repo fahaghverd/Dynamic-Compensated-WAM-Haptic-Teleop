@@ -31,11 +31,14 @@ endfunction()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)  
 
 add_programs(
-	ex11_master_master_gravity_extorq
+	# ex11_master_master_gravity_extorq
 	ex11_master_master_gravity
-	ex11_master_master_feed
-	ex11_master_master_feed_extorq
-	ex11_master_master_nogravity
+	ex11_master_master_ctc_feed
+	ex11_master_master_ID_feed
+	# ex11_master_master_feed_extorq
+	# ex11_master_master_nogravity
+	# ex11_master_master_feed_full
+	# ex11_master_master_feed_full_extorq
 
 )
 

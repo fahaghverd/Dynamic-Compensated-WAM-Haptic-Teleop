@@ -1,4 +1,5 @@
-//Estimated Pvector, gravity included.
+//Estimate P vector, only for whole dynamic term
+
 #ifndef PI_VECTOR_HPP_
 #define PI_VECTOR_HPP_
 
