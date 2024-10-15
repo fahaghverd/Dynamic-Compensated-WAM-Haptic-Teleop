@@ -170,14 +170,14 @@ def plot_data(kinematics_data, dynamics_data, num_data):
     plt.ylabel('Inverse Dynamic')
 
     plt.subplot(num_data, 2, 15)
-    plt.plot(dynamics_time, dynamics_data['calculated external torque'][:, 0])
+    plt.plot(dynamics_time, dynamics_data['calculated external torque'][:, 1])
     plt.title('Joint 2 External Torque')
     plt.xlabel('Time (s)')
     plt.ylabel('External Torque')
     plt.legend()
 
     plt.subplot(num_data, 2, 16)
-    plt.plot(dynamics_time, dynamics_data['calculated external torque'][:, 2])
+    plt.plot(dynamics_time, dynamics_data['calculated external torque'][:, 3])
     plt.title('Joint 4 External Torque')
     plt.xlabel('Time (s)')
     plt.ylabel('External Torque')
@@ -202,7 +202,7 @@ def main(folder_name):
     kinematics_data = read_data(kinematics_file, kinematics_vars)
     dynamics_data = read_data(dynamics_file, dynamics_vars)
 
-    cal_extorq = dynamics_data[dynamics_vars[1]] - dynamics_data[dynamics_vars[2]] - dynamics_data[dynamics_vars[4]]
+    cal_extorq = dynamics_data[dynamics_vars[3]] + dynamics_data[dynamics_vars[2]] - dynamics_data[dynamics_vars[1]]
     dynamics_data['calculated external torque'] = cal_extorq
     dynamics_vars.append("calculated external torque")
 

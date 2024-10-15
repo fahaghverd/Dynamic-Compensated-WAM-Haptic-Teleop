@@ -36,9 +36,10 @@ add_programs(
 	ex11_master_master_feed
 	ex11_master_master_ctc_feed_extorq
 	ex11_master_master_ID_feed_extorq
+	ex11_master_master_ID_feed
+	ex11_master_master_ctc_feed
 	ex11_master_master_nogravity
-	ex11_master_master_feed_full
-	ex11_master_master_feed_full_extorq
+	2DOF_wam_joint_space_ctc_extorq
 
 )
 

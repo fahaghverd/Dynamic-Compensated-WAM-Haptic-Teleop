@@ -226,7 +226,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	systems::Callback<jt_type> feedSat(boost::bind(saturateJt<DOF>,_1, jtLimits));
 	double coeff_default = 1000;
 	double coeff = getEnvDouble("coeff_tanh", coeff_default);
-	Dynamics<DOF> feedFWD(coeff);
+	Dynamics<DOF> feedFWD;
 
 	connect(mm.output, hp1.input);
 	connect(hp1.output, hp2.input);
@@ -242,7 +242,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
     connect(jaSat.output, feedFWD.jaInputDynamics);
 
 	//ID for arm dynamics
-	Dynamics<DOF> inverseDyn(coeff);
+	Dynamics<DOF> inverseDyn;
 	systems::FirstOrderFilter<jp_type> hp3;
 	systems::FirstOrderFilter<jp_type> hp4;
 	hp3.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));

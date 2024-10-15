@@ -164,33 +164,33 @@ def plot_data(kinematics_data, dynamics_data, num_data):
     plt.xlabel('Time (s)')
     plt.ylabel('Inverse Dynamic')
 
-    plt.subplot(num_data, 2, 15)
-    plt.plot(dynamics_time, dynamics_data['applied external torque'][:, 0], label='Applied Joint 2 External Torque', linestyle='--')
-    plt.plot(dynamics_time, dynamics_data['calculated external torque'][:, 0], label='Calculated Joint 2 External Torque', linestyle='-')
-    plt.title('Joint 2 External Torque')
-    plt.xlabel('Time (s)')
-    plt.ylabel('External Torque')
-    plt.legend()
+    # plt.subplot(num_data, 2, 15)
+    # plt.plot(dynamics_time, dynamics_data['applied external torque'][:, 0], label='Applied Joint 2 External Torque', linestyle='--')
+    # plt.plot(dynamics_time, dynamics_data['calculated external torque'][:, 0], label='Calculated Joint 2 External Torque', linestyle='-')
+    # plt.title('Joint 2 External Torque')
+    # plt.xlabel('Time (s)')
+    # plt.ylabel('External Torque')
+    # plt.legend()
 
-    plt.subplot(num_data, 2, 16)
-    plt.plot(dynamics_time, dynamics_data['applied external torque'][:, 2], label='Applied Joint 4 External Torque', linestyle='--')
-    plt.plot(dynamics_time, dynamics_data['calculated external torque'][:, 2], label='Calculated Joint 4 External Torque', linestyle='-')
-    plt.title('Joint 4 External Torque')
-    plt.xlabel('Time (s)')
-    plt.ylabel('External Torque')
-    plt.legend()
+    # plt.subplot(num_data, 2, 16)
+    # plt.plot(dynamics_time, dynamics_data['applied external torque'][:, 2], label='Applied Joint 4 External Torque', linestyle='--')
+    # plt.plot(dynamics_time, dynamics_data['calculated external torque'][:, 2], label='Calculated Joint 4 External Torque', linestyle='-')
+    # plt.title('Joint 4 External Torque')
+    # plt.xlabel('Time (s)')
+    # plt.ylabel('External Torque')
+    # plt.legend()
 
-    plt.subplot(num_data, 2, 17)
-    plt.plot(dynamics_time, dynamics_data['PD'][:, 0])
-    plt.title('Joint 2 WAM PD')
-    plt.xlabel('Time (s)')
-    plt.ylabel('PD')
+    # plt.subplot(num_data, 2, 15)
+    # plt.plot(dynamics_time, dynamics_data['PD'][:, 0])
+    # plt.title('Joint 2 WAM PD')
+    # plt.xlabel('Time (s)')
+    # plt.ylabel('PD')
 
-    plt.subplot(num_data, 2, 18)
-    plt.plot(dynamics_time, dynamics_data['PD'][:, 2])
-    plt.title('Joint 4 WAM PD')
-    plt.xlabel('Time (s)')
-    plt.ylabel('PD')
+    # plt.subplot(num_data, 2, 16)
+    # plt.plot(dynamics_time, dynamics_data['PD'][:, 2])
+    # plt.title('Joint 4 WAM PD')
+    # plt.xlabel('Time (s)')
+    # plt.ylabel('PD')
 
 
     plt.show()
@@ -242,6 +242,12 @@ def calculate_errors(kinematics_data, dynamics_data):
     calculated_extorq_4 = dynamics_data['calculated external torque'][:, 2]
     extorq_measurement_nrmse_4 = calculate_nrmse(applied_extorq_4, calculated_extorq_4)
 
+    pos_2_mean_abs = np.mean(np.abs(pos_feedback_2))
+    pos_4_mean_abs = np.mean(np.abs(pos_feedback_4))
+
+    print("pos_2_mean_abs: ", pos_2_mean_abs)
+    print("pos_4_mean_abs: ", pos_4_mean_abs)
+
     print("pos_nrmse_2: ", pos_nrmse_2)
     print("pos_nrmse_4: ", pos_nrmse_4)
 
@@ -265,15 +271,15 @@ def main(folder_name):
     kinematics_data = read_data(kinematics_file, kinematics_vars)
     dynamics_data = read_data(dynamics_file, dynamics_vars)
 
-    PD_2 = np.mean(np.abs(dynamics_data[dynamics_vars[6]][:, 0]))
-    PD_4 = np.mean(np.abs(dynamics_data[dynamics_vars[6]][:, 2]))
+    PD_2 = np.mean(np.abs(dynamics_data[dynamics_vars[5]][:, 0]))
+    PD_4 = np.mean(np.abs(dynamics_data[dynamics_vars[5]][:, 2]))
     print("PD_2: ", PD_2)
     print("PD_4: ", PD_4)
 
     # cal_extorq = (dynamics_data[dynamics_vars[4]] - dynamics_data[dynamics_vars[3]] - (dynamics_data[dynamics_vars[1]] - dynamics_data[dynamics_vars[2]] - dynamics_data[dynamics_vars[3]] - dynamics_data[dynamics_vars[5]]))
-    cal_extorq = (dynamics_data[dynamics_vars[4]] - (dynamics_data[dynamics_vars[6]]))
-    dynamics_data['calculated external torque'] = cal_extorq
-    dynamics_vars.append("calculated external torque")
+    # cal_extorq = dynamics_data[dynamics_vars[3]] - dynamics_data[dynamics_vars[6]] - dynamics_data[dynamics_vars[4]]
+    # dynamics_data['calculated external torque'] = cal_extorq
+    # dynamics_vars.append("calculated external torque")
     num_data = 3 + len(dynamics_vars) - 1
     print(num_data)
     

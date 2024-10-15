@@ -6,7 +6,7 @@
 #include <Eigen/Dense>
 
 // Function to calculate the Y matrix
-Eigen::Matrix<double,2 ,8> calculate_Y_matrix(const Eigen::Vector4d theta, Eigen::Vector4d thetad, Eigen::Vector4d thetadd, const double coeff) {
+Eigen::Matrix<double,2 ,8> calculate_Y_matrix(const Eigen::Vector4d theta, Eigen::Vector4d thetad, Eigen::Vector4d thetadd) {
     
     Eigen::Matrix<double, 2, 8> Y;
     Y.setZero(); // Initialize the matrix with zeros

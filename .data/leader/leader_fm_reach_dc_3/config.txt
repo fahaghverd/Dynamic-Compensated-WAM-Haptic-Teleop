@@ -1,0 +1,11 @@
+Master Master Teleop with Gravity Compensation-Leader.
+Kinematics data: time, desired joint pos, feedback joint pos, desired joint vel, feedback joint vel, desired joint acc, feedback joint acc.
+Dynamics data: time, wam joint torque input, wam gravity input, inverse dynamic.
+Joint Position PID Controller: 
+kp: [1000, 400, 200]
+ki: [5, 2.5, 0.5]
+kd: [8, 3.3, 0.8]
+Control Signal Limit: [50, 40, 30].
+Sync Pos:[-0.1, 0, 1.5]
+High Pass Filter Frq used to get desired vel and acc:25
+High Pass Filter Frq used to get current acc:25

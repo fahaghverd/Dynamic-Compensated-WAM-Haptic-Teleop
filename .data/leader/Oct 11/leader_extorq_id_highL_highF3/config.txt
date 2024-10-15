@@ -1,0 +1,17 @@
+Master Master Teleop with Dynamic Compensation and Sinusoidal External Torque-Leader.
+Kinematics data: time, desired joint pos, feedback joint pos, desired joint vel, feedback joint vel, desired joint acc, feedback joint acc
+Dynamics data: time, wam joint torque input, wam gravity input, dynamic feed forward, inverse dynamic, applied external torque, PD
+Joint Position PID Controller: 
+kp: [1000, 400, 200]
+ki: [5, 2.5, 0.5]
+kd: [20, 4.2, 2.3]
+Control Signal Limit: [50, 40, 30].
+Sync Pos:[0, 0, 0.2]
+Desired Joint Vel Saturation Limit: [5, 5, 5]
+Desired Joint Acc Saturation Limit: [5, 5, 5]
+Current Joint Acc Saturation Limit: [5, 5, 5]
+FeedFwd Torque Saturation Limit: [20, 20, 20]
+High Pass Filter Frq used to get desired vel and acc:25
+High Pass Filter Frq used to get current acc:25
+Tanh Coeef in Dynamics:1000
+Frequency and amplitude for the applied external torque: F:0.5A: [4, 0, 1]

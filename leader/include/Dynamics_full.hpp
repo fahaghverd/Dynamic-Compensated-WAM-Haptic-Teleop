@@ -40,9 +40,9 @@ protected:
 	typename Output<jt_type>::Value* dynamicsFeedFWDValue;
 
 public:
-	explicit Dynamics(double tanh_coeff/*systems::ExecutionManager* em*/) :
+	explicit Dynamics(/*systems::ExecutionManager* em*/) :
 			jpInputDynamics(this), jvInputDynamics(this), jaInputDynamics(this), dynamicsFeedFWD(this,
-					&dynamicsFeedFWDValue), coeff(tanh_coeff) {
+					&dynamicsFeedFWDValue) {
 	//		      em->startManaging(*this);
 //		    }
 	}
@@ -71,7 +71,7 @@ protected:
 		ThetadotInput << tmp_theta_vel[0], tmp_theta_vel[1], tmp_theta_vel[2], tmp_theta_vel[3];
 		tmp_theta_acc = this->jaInputDynamics.getValue();
 		ThetaddotInput << tmp_theta_acc[0], tmp_theta_acc[1], tmp_theta_acc[2], tmp_theta_acc[3];
-		Y = calculate_Y_matrix(ThetaInput, ThetadotInput, ThetaddotInput, coeff);
+		Y = calculate_Y_matrix(ThetaInput, ThetadotInput, ThetaddotInput);
 		P = initialize_pi();
 		
 		FeedFwd = Y * P;

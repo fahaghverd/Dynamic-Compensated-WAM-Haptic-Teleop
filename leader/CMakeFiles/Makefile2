@@ -53,10 +53,11 @@ CMAKE_BINARY_DIR = /home/rowley/libbarrett_custom_examples/Dynamic-Compensated-W
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/ex11_master_master_feed_full_extorq.dir/all
-all: CMakeFiles/ex11_master_master_feed_full.dir/all
+all: CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/all
 all: CMakeFiles/ex11_master_master_nogravity.dir/all
+all: CMakeFiles/ex11_master_master_ctc_feed.dir/all
 all: CMakeFiles/ex11_master_master_ID_feed_extorq.dir/all
+all: CMakeFiles/ex11_master_master_ID_feed.dir/all
 all: CMakeFiles/ex11_master_master_ctc_feed_extorq.dir/all
 all: CMakeFiles/ex11_master_master_feed.dir/all
 all: CMakeFiles/ex11_master_master_gravity.dir/all
@@ -70,10 +71,11 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
-clean: CMakeFiles/ex11_master_master_feed_full_extorq.dir/clean
-clean: CMakeFiles/ex11_master_master_feed_full.dir/clean
+clean: CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/clean
 clean: CMakeFiles/ex11_master_master_nogravity.dir/clean
+clean: CMakeFiles/ex11_master_master_ctc_feed.dir/clean
 clean: CMakeFiles/ex11_master_master_ID_feed_extorq.dir/clean
+clean: CMakeFiles/ex11_master_master_ID_feed.dir/clean
 clean: CMakeFiles/ex11_master_master_ctc_feed_extorq.dir/clean
 clean: CMakeFiles/ex11_master_master_feed.dir/clean
 clean: CMakeFiles/ex11_master_master_gravity.dir/clean
@@ -82,58 +84,31 @@ clean: CMakeFiles/ex11_master_master_gravity_extorq.dir/clean
 .PHONY : clean
 
 #=============================================================================
-# Target rules for target CMakeFiles/ex11_master_master_feed_full_extorq.dir
+# Target rules for target CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir
 
 # All Build rule for target.
-CMakeFiles/ex11_master_master_feed_full_extorq.dir/all:
-	$(MAKE) -f CMakeFiles/ex11_master_master_feed_full_extorq.dir/build.make CMakeFiles/ex11_master_master_feed_full_extorq.dir/depend
-	$(MAKE) -f CMakeFiles/ex11_master_master_feed_full_extorq.dir/build.make CMakeFiles/ex11_master_master_feed_full_extorq.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles --progress-num=9,10 "Built target ex11_master_master_feed_full_extorq"
-.PHONY : CMakeFiles/ex11_master_master_feed_full_extorq.dir/all
+CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/all:
+	$(MAKE) -f CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/build.make CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/depend
+	$(MAKE) -f CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/build.make CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles --progress-num=1,2 "Built target 2DOF_wam_joint_space_ctc_extorq"
+.PHONY : CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/ex11_master_master_feed_full_extorq.dir/rule: cmake_check_build_system
+CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/rule: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles 2
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/ex11_master_master_feed_full_extorq.dir/all
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles 0
-.PHONY : CMakeFiles/ex11_master_master_feed_full_extorq.dir/rule
+.PHONY : CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/rule
 
 # Convenience name for target.
-ex11_master_master_feed_full_extorq: CMakeFiles/ex11_master_master_feed_full_extorq.dir/rule
+2DOF_wam_joint_space_ctc_extorq: CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/rule
 
-.PHONY : ex11_master_master_feed_full_extorq
-
-# clean rule for target.
-CMakeFiles/ex11_master_master_feed_full_extorq.dir/clean:
-	$(MAKE) -f CMakeFiles/ex11_master_master_feed_full_extorq.dir/build.make CMakeFiles/ex11_master_master_feed_full_extorq.dir/clean
-.PHONY : CMakeFiles/ex11_master_master_feed_full_extorq.dir/clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/ex11_master_master_feed_full.dir
-
-# All Build rule for target.
-CMakeFiles/ex11_master_master_feed_full.dir/all:
-	$(MAKE) -f CMakeFiles/ex11_master_master_feed_full.dir/build.make CMakeFiles/ex11_master_master_feed_full.dir/depend
-	$(MAKE) -f CMakeFiles/ex11_master_master_feed_full.dir/build.make CMakeFiles/ex11_master_master_feed_full.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles --progress-num=7,8 "Built target ex11_master_master_feed_full"
-.PHONY : CMakeFiles/ex11_master_master_feed_full.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/ex11_master_master_feed_full.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles 2
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/ex11_master_master_feed_full.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles 0
-.PHONY : CMakeFiles/ex11_master_master_feed_full.dir/rule
-
-# Convenience name for target.
-ex11_master_master_feed_full: CMakeFiles/ex11_master_master_feed_full.dir/rule
-
-.PHONY : ex11_master_master_feed_full
+.PHONY : 2DOF_wam_joint_space_ctc_extorq
 
 # clean rule for target.
-CMakeFiles/ex11_master_master_feed_full.dir/clean:
-	$(MAKE) -f CMakeFiles/ex11_master_master_feed_full.dir/build.make CMakeFiles/ex11_master_master_feed_full.dir/clean
-.PHONY : CMakeFiles/ex11_master_master_feed_full.dir/clean
+CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/clean:
+	$(MAKE) -f CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/build.make CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/clean
+.PHONY : CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/clean
 
 #=============================================================================
 # Target rules for target CMakeFiles/ex11_master_master_nogravity.dir
@@ -142,7 +117,7 @@ CMakeFiles/ex11_master_master_feed_full.dir/clean:
 CMakeFiles/ex11_master_master_nogravity.dir/all:
 	$(MAKE) -f CMakeFiles/ex11_master_master_nogravity.dir/build.make CMakeFiles/ex11_master_master_nogravity.dir/depend
 	$(MAKE) -f CMakeFiles/ex11_master_master_nogravity.dir/build.make CMakeFiles/ex11_master_master_nogravity.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles --progress-num=15,16 "Built target ex11_master_master_nogravity"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles --progress-num=17,18 "Built target ex11_master_master_nogravity"
 .PHONY : CMakeFiles/ex11_master_master_nogravity.dir/all
 
 # Build rule for subdir invocation for target.
@@ -163,13 +138,40 @@ CMakeFiles/ex11_master_master_nogravity.dir/clean:
 .PHONY : CMakeFiles/ex11_master_master_nogravity.dir/clean
 
 #=============================================================================
+# Target rules for target CMakeFiles/ex11_master_master_ctc_feed.dir
+
+# All Build rule for target.
+CMakeFiles/ex11_master_master_ctc_feed.dir/all:
+	$(MAKE) -f CMakeFiles/ex11_master_master_ctc_feed.dir/build.make CMakeFiles/ex11_master_master_ctc_feed.dir/depend
+	$(MAKE) -f CMakeFiles/ex11_master_master_ctc_feed.dir/build.make CMakeFiles/ex11_master_master_ctc_feed.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles --progress-num=7,8 "Built target ex11_master_master_ctc_feed"
+.PHONY : CMakeFiles/ex11_master_master_ctc_feed.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/ex11_master_master_ctc_feed.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles 2
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/ex11_master_master_ctc_feed.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles 0
+.PHONY : CMakeFiles/ex11_master_master_ctc_feed.dir/rule
+
+# Convenience name for target.
+ex11_master_master_ctc_feed: CMakeFiles/ex11_master_master_ctc_feed.dir/rule
+
+.PHONY : ex11_master_master_ctc_feed
+
+# clean rule for target.
+CMakeFiles/ex11_master_master_ctc_feed.dir/clean:
+	$(MAKE) -f CMakeFiles/ex11_master_master_ctc_feed.dir/build.make CMakeFiles/ex11_master_master_ctc_feed.dir/clean
+.PHONY : CMakeFiles/ex11_master_master_ctc_feed.dir/clean
+
+#=============================================================================
 # Target rules for target CMakeFiles/ex11_master_master_ID_feed_extorq.dir
 
 # All Build rule for target.
 CMakeFiles/ex11_master_master_ID_feed_extorq.dir/all:
 	$(MAKE) -f CMakeFiles/ex11_master_master_ID_feed_extorq.dir/build.make CMakeFiles/ex11_master_master_ID_feed_extorq.dir/depend
 	$(MAKE) -f CMakeFiles/ex11_master_master_ID_feed_extorq.dir/build.make CMakeFiles/ex11_master_master_ID_feed_extorq.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles --progress-num=1,2 "Built target ex11_master_master_ID_feed_extorq"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles --progress-num=5,6 "Built target ex11_master_master_ID_feed_extorq"
 .PHONY : CMakeFiles/ex11_master_master_ID_feed_extorq.dir/all
 
 # Build rule for subdir invocation for target.
@@ -190,13 +192,40 @@ CMakeFiles/ex11_master_master_ID_feed_extorq.dir/clean:
 .PHONY : CMakeFiles/ex11_master_master_ID_feed_extorq.dir/clean
 
 #=============================================================================
+# Target rules for target CMakeFiles/ex11_master_master_ID_feed.dir
+
+# All Build rule for target.
+CMakeFiles/ex11_master_master_ID_feed.dir/all:
+	$(MAKE) -f CMakeFiles/ex11_master_master_ID_feed.dir/build.make CMakeFiles/ex11_master_master_ID_feed.dir/depend
+	$(MAKE) -f CMakeFiles/ex11_master_master_ID_feed.dir/build.make CMakeFiles/ex11_master_master_ID_feed.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles --progress-num=3,4 "Built target ex11_master_master_ID_feed"
+.PHONY : CMakeFiles/ex11_master_master_ID_feed.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/ex11_master_master_ID_feed.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles 2
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/ex11_master_master_ID_feed.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles 0
+.PHONY : CMakeFiles/ex11_master_master_ID_feed.dir/rule
+
+# Convenience name for target.
+ex11_master_master_ID_feed: CMakeFiles/ex11_master_master_ID_feed.dir/rule
+
+.PHONY : ex11_master_master_ID_feed
+
+# clean rule for target.
+CMakeFiles/ex11_master_master_ID_feed.dir/clean:
+	$(MAKE) -f CMakeFiles/ex11_master_master_ID_feed.dir/build.make CMakeFiles/ex11_master_master_ID_feed.dir/clean
+.PHONY : CMakeFiles/ex11_master_master_ID_feed.dir/clean
+
+#=============================================================================
 # Target rules for target CMakeFiles/ex11_master_master_ctc_feed_extorq.dir
 
 # All Build rule for target.
 CMakeFiles/ex11_master_master_ctc_feed_extorq.dir/all:
 	$(MAKE) -f CMakeFiles/ex11_master_master_ctc_feed_extorq.dir/build.make CMakeFiles/ex11_master_master_ctc_feed_extorq.dir/depend
 	$(MAKE) -f CMakeFiles/ex11_master_master_ctc_feed_extorq.dir/build.make CMakeFiles/ex11_master_master_ctc_feed_extorq.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles --progress-num=3,4 "Built target ex11_master_master_ctc_feed_extorq"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles --progress-num=9,10 "Built target ex11_master_master_ctc_feed_extorq"
 .PHONY : CMakeFiles/ex11_master_master_ctc_feed_extorq.dir/all
 
 # Build rule for subdir invocation for target.
@@ -223,7 +252,7 @@ CMakeFiles/ex11_master_master_ctc_feed_extorq.dir/clean:
 CMakeFiles/ex11_master_master_feed.dir/all:
 	$(MAKE) -f CMakeFiles/ex11_master_master_feed.dir/build.make CMakeFiles/ex11_master_master_feed.dir/depend
 	$(MAKE) -f CMakeFiles/ex11_master_master_feed.dir/build.make CMakeFiles/ex11_master_master_feed.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles --progress-num=5,6 "Built target ex11_master_master_feed"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles --progress-num=11,12 "Built target ex11_master_master_feed"
 .PHONY : CMakeFiles/ex11_master_master_feed.dir/all
 
 # Build rule for subdir invocation for target.
@@ -250,7 +279,7 @@ CMakeFiles/ex11_master_master_feed.dir/clean:
 CMakeFiles/ex11_master_master_gravity.dir/all:
 	$(MAKE) -f CMakeFiles/ex11_master_master_gravity.dir/build.make CMakeFiles/ex11_master_master_gravity.dir/depend
 	$(MAKE) -f CMakeFiles/ex11_master_master_gravity.dir/build.make CMakeFiles/ex11_master_master_gravity.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles --progress-num=11,12 "Built target ex11_master_master_gravity"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles --progress-num=13,14 "Built target ex11_master_master_gravity"
 .PHONY : CMakeFiles/ex11_master_master_gravity.dir/all
 
 # Build rule for subdir invocation for target.
@@ -277,7 +306,7 @@ CMakeFiles/ex11_master_master_gravity.dir/clean:
 CMakeFiles/ex11_master_master_gravity_extorq.dir/all:
 	$(MAKE) -f CMakeFiles/ex11_master_master_gravity_extorq.dir/build.make CMakeFiles/ex11_master_master_gravity_extorq.dir/depend
 	$(MAKE) -f CMakeFiles/ex11_master_master_gravity_extorq.dir/build.make CMakeFiles/ex11_master_master_gravity_extorq.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles --progress-num=13,14 "Built target ex11_master_master_gravity_extorq"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/rowley/libbarrett_custom_examples/Dynamic-Compensated-WAM-Haptic-Teleop/leader/CMakeFiles --progress-num=15,16 "Built target ex11_master_master_gravity_extorq"
 .PHONY : CMakeFiles/ex11_master_master_gravity_extorq.dir/all
 
 # Build rule for subdir invocation for target.

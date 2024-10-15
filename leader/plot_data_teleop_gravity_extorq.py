@@ -229,11 +229,19 @@ def calculate_errors(kinematics_data, dynamics_data):
     calculated_extorq_4 = dynamics_data['calculated external torque'][:, 2]
     extorq_measurement_nrmse_4 = calculate_nrmse(applied_extorq_4, calculated_extorq_4)
 
+    pos_2_mean_abs = np.mean(np.abs(pos_feedback_2))
+    pos_4_mean_abs = np.mean(np.abs(pos_feedback_4))
+
+    print("pos_2_mean_abs: ", pos_2_mean_abs)
+    print("pos_4_mean_abs: ", pos_4_mean_abs)
+
     print("pos_nrmse_2: ", pos_nrmse_2)
     print("pos_nrmse_4: ", pos_nrmse_4)
 
     print("extorq_measurement_nrmse_2: ", extorq_measurement_nrmse_2)
     print("extorq_measurement_nrmse_4: ", extorq_measurement_nrmse_4)
+
+
 
 
 def main(folder_name):
