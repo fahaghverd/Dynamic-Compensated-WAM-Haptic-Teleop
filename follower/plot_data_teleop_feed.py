@@ -62,7 +62,7 @@ def read_data(file_path, variable_names):
 
 def plot_data(kinematics_data, dynamics_data, num_data):
 
-    plt.figure(figsize=(12, 12))
+    plt.figure(figsize=(12, 16))
 
     kinematics_time = kinematics_data['time']
     # Subplot for Joint 2 Position
@@ -121,6 +121,7 @@ def plot_data(kinematics_data, dynamics_data, num_data):
 
     dynamics_time = dynamics_data['time']
 
+    # Existing Dynamics Plots
     plt.subplot(num_data, 2, 7)
     plt.plot(dynamics_time, dynamics_data['wam joint torque input'][:, 1])
     plt.title('Joint 2 WAM Torque Input')
@@ -133,58 +134,30 @@ def plot_data(kinematics_data, dynamics_data, num_data):
     plt.xlabel('Time (s)')
     plt.ylabel('Torque Input')
 
+    # Impedance Calculation and Plotting
+    velocity_threshold = 0.01  # Define a threshold for velocity
+    impedance_data = {}
+    for i in range(7):
+        valid_indices = np.abs(kinematics_data['feedback joint vel'][:, i]) > velocity_threshold
+        impedance_data[f'joint_{i+1}_impedance'] = np.where(valid_indices, dynamics_data['wam joint torque input'][:, i] / (kinematics_data['feedback joint vel'][:, i] + 1e-6), np.nan)
+
+    impedance_joint_2 = impedance_data['joint_2_impedance']
+    impedance_joint_4 = impedance_data['joint_4_impedance']
+
     plt.subplot(num_data, 2, 9)
-    plt.plot(dynamics_time, dynamics_data['wam gravity input'][:, 1])
-    plt.title('Joint 2 WAM Gravity Input')
+    plt.plot(dynamics_time, impedance_joint_2)
+    plt.title('Joint 2 Impedance')
     plt.xlabel('Time (s)')
-    plt.ylabel('Gravity Input')
+    plt.ylabel('Impedance')
 
     plt.subplot(num_data, 2, 10)
-    plt.plot(dynamics_time, dynamics_data['wam gravity input'][:, 3])
-    plt.title('Joint 4 WAM Gravity Input')
+    plt.plot(dynamics_time, impedance_joint_4)
+    plt.title('Joint 4 Impedance')
     plt.xlabel('Time (s)')
-    plt.ylabel('Gravity Input')
+    plt.ylabel('Impedance')
 
-    plt.subplot(num_data, 2, 11)
-    plt.plot(dynamics_time, dynamics_data['dynamic feed forward'][:, 1])
-    plt.title('Joint 2 WAM Dynamic Feed Forward')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Dynamic Feed Forward Input')
-
-    plt.subplot(num_data, 2, 12)
-    plt.plot(dynamics_time, dynamics_data['dynamic feed forward'][:, 3])
-    plt.title('Joint 4 WAM Dynamic Feed Forward')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Dynamic Feed Forward Input')
-
-    plt.subplot(num_data, 2, 13)
-    plt.plot(dynamics_time, dynamics_data['inverse dynamic.'][:, 1])
-    plt.title('Joint 2 WAM Inverse Dynamic')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Inverse Dynamic')
-
-    plt.subplot(num_data, 2, 14)
-    plt.plot(dynamics_time, dynamics_data['inverse dynamic.'][:, 3])
-    plt.title('Joint 4 WAM Inverse Dynamic')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Inverse Dynamic')
-
-    plt.subplot(num_data, 2, 15)
-    plt.plot(dynamics_time, dynamics_data['calculated external torque'][:, 0])
-    plt.title('Joint 2 External Torque')
-    plt.xlabel('Time (s)')
-    plt.ylabel('External Torque')
-    plt.legend()
-
-    plt.subplot(num_data, 2, 16)
-    plt.plot(dynamics_time, dynamics_data['calculated external torque'][:, 2])
-    plt.title('Joint 4 External Torque')
-    plt.xlabel('Time (s)')
-    plt.ylabel('External Torque')
-    plt.legend()
-
+    plt.tight_layout()
     plt.show()
-
 
 
 def main(folder_name):
@@ -206,7 +179,7 @@ def main(folder_name):
     dynamics_data['calculated external torque'] = cal_extorq
     dynamics_vars.append("calculated external torque")
 
-    num_data = 3 + len(dynamics_vars) - 1
+    num_data = 5  # Updated number of subplots
 
     plot_data(kinematics_data, dynamics_data, num_data)
 

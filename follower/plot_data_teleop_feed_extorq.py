@@ -3,6 +3,60 @@ import os
 import sys
 import numpy as np
 
+def jacobian(theta1, theta2, theta3, theta4):
+    J = np.array([
+        [-0.4*(np.sin(theta1)*np.cos(theta2)*np.cos(theta3) + np.sin(theta3)*np.cos(theta1))*np.cos(theta4) + 0.4*np.sin(theta1)*np.sin(theta2)*np.sin(theta4) - 0.55*np.sin(theta1)*np.sin(theta2) - 0.045*np.sin(theta1)*np.cos(theta2)*np.cos(theta3) - 0.045*np.sin(theta3)*np.cos(theta1), 
+         (-0.4*np.sin(theta2)*np.cos(theta3)*np.cos(theta4) - 0.045*np.sin(theta2)*np.cos(theta3) - 0.4*np.sin(theta4)*np.cos(theta2) + 0.55*np.cos(theta2))*np.cos(theta1), 
+         -0.4*np.sin(theta1)*np.cos(theta3)*np.cos(theta4) - 0.045*np.sin(theta1)*np.cos(theta3) - 0.4*np.sin(theta3)*np.cos(theta1)*np.cos(theta2)*np.cos(theta4) - 0.045*np.sin(theta3)*np.cos(theta1)*np.cos(theta2), 
+         0.4*np.sin(theta1)*np.sin(theta3)*np.sin(theta4) - 0.4*np.sin(theta2)*np.cos(theta1)*np.cos(theta4) - 0.4*np.sin(theta4)*np.cos(theta1)*np.cos(theta2)*np.cos(theta3)],
+        
+        [-0.4*(np.sin(theta1)*np.sin(theta3) - np.cos(theta1)*np.cos(theta2)*np.cos(theta3))*np.cos(theta4) - 0.045*np.sin(theta1)*np.sin(theta3) - 0.4*np.sin(theta2)*np.sin(theta4)*np.cos(theta1) + 0.55*np.sin(theta2)*np.cos(theta1) + 0.045*np.cos(theta1)*np.cos(theta2)*np.cos(theta3), 
+         (-0.4*np.sin(theta2)*np.cos(theta3)*np.cos(theta4) - 0.045*np.sin(theta2)*np.cos(theta3) - 0.4*np.sin(theta4)*np.cos(theta2) + 0.55*np.cos(theta2))*np.sin(theta1), 
+         -0.4*np.sin(theta1)*np.sin(theta3)*np.cos(theta2)*np.cos(theta4) - 0.045*np.sin(theta1)*np.sin(theta3)*np.cos(theta2) + 0.4*np.cos(theta1)*np.cos(theta3)*np.cos(theta4) + 0.045*np.cos(theta1)*np.cos(theta3), 
+         -0.4*np.sin(theta1)*np.sin(theta2)*np.cos(theta4) - 0.4*np.sin(theta1)*np.sin(theta4)*np.cos(theta2)*np.cos(theta3) - 0.4*np.sin(theta3)*np.sin(theta4)*np.cos(theta1)],
+
+        [0, 
+         0.4*np.sin(theta2)*np.sin(theta4) - 0.55*np.sin(theta2) - 0.4*np.cos(theta2)*np.cos(theta3)*np.cos(theta4) - 0.045*np.cos(theta2)*np.cos(theta3), 
+         (0.4*np.cos(theta4) + 0.045)*np.sin(theta2)*np.sin(theta3), 
+         0.4*np.sin(theta2)*np.sin(theta4)*np.cos(theta3) - 0.4*np.cos(theta2)*np.cos(theta4)],
+
+        [0, 
+         -np.sin(theta1), 
+         np.sin(theta2)*np.cos(theta1), 
+         -np.sin(theta1)*np.cos(theta3) - np.sin(theta3)*np.cos(theta1)*np.cos(theta2)],
+
+        [0, 
+         np.cos(theta1), 
+         np.sin(theta1)*np.sin(theta2), 
+         -np.sin(theta1)*np.sin(theta3)*np.cos(theta2) + np.cos(theta1)*np.cos(theta3)],
+
+        [1, 
+         0, 
+         np.cos(theta2), 
+         np.sin(theta2)*np.sin(theta3)]
+    ])
+    
+    return J
+
+def calculate_cartesian_force(dynamics_data, joint_angles):
+    theta1, theta2, theta3, theta4 = joint_angles
+    # Get the Jacobian matrix based on the current joint angles
+    J = jacobian(theta1, theta2, theta3, theta4)
+    
+    # External torque from dynamics data (assuming external torque is stored in dynamics_data['applied external torque'])
+    external_torque = dynamics_data['applied external torque']
+
+    # Compute the pseudo-inverse of the Jacobian matrix
+    J_pinv = np.linalg.pinv(J)
+
+    # Transpose of the pseudo-inverse of the Jacobian matrix
+    J_pinv_T = J_pinv.T
+
+    # Calculate Cartesian force by multiplying J_pinv_T with external torque
+    cartesian_force = np.dot(J_pinv_T, external_torque.T[:4])  # Ensure torque is correctly transposed
+
+    return cartesian_force.T
+
 def read_config(file_path):
     kinematics_vars = []
     dynamics_vars = []
@@ -249,6 +303,8 @@ def main(folder_name):
     # Read data from kinematics and dynamics files
     kinematics_data = read_data(kinematics_file, kinematics_vars)
     dynamics_data = read_data(dynamics_file, dynamics_vars)
+
+    joint_angles = kinematics_data['feedback joint pos'][-1, :4]  # Taking the last feedback joint position
 
     cal_extorq = dynamics_data[dynamics_vars[2]] - dynamics_data[dynamics_vars[3]] - dynamics_data[dynamics_vars[5]]
     dynamics_data['calculated external torque'] = cal_extorq
