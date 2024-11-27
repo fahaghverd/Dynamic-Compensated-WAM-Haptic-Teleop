@@ -184,6 +184,53 @@ def plot_data(kinematics_data, dynamics_data, num_data):
     plt.show()
 
 
+def calculate_nrmse(desired, feedback, normalization='range'):
+    """
+    Calculate the Normalized Root Mean Square Error (nRMSE).
+
+    Parameters:
+    desired (array-like): Desired values.
+    feedback (array-like): Feedback values.
+    normalization (str): 'range' to normalize by the range of desired values,
+                         'mean' to normalize by the mean of desired values.
+
+    Returns:
+    float: Normalized Root Mean Square Error.
+    """
+    # Calculate RMSE
+    rmse = np.sqrt(np.mean((desired - feedback) ** 2))
+    
+    # Normalize RMSE
+    if normalization == 'range':
+        range_desired = np.max(desired) - np.min(desired)
+        nrmse = rmse / range_desired if range_desired != 0 else float('inf')
+    elif normalization == 'mean':
+        mean_desired = np.mean(desired)
+        nrmse = rmse / mean_desired if mean_desired != 0 else float('inf')
+    else:
+        raise ValueError("Normalization method must be 'range' or 'mean'.")
+    
+    return nrmse
+
+def calculate_errors(kinematics_data, dynamics_data):
+    
+    pos_des_2 = kinematics_data['desired joint pos'][:, 0]
+    pos_feedback_2 = kinematics_data['feedback joint pos'][:, 0]
+    pos_nrmse_2 = calculate_nrmse(pos_des_2, pos_feedback_2)
+
+    pos_des_4 = kinematics_data['desired joint pos'][:, 2]
+    pos_feedback_4 = kinematics_data['feedback joint pos'][:, 2]
+    pos_nrmse_4 = calculate_nrmse(pos_des_4, pos_feedback_4)
+
+    pos_2_mean_abs = np.mean(np.abs(pos_feedback_2))
+    pos_4_mean_abs = np.mean(np.abs(pos_feedback_4))
+
+    print("pos_2_mean_abs: ", pos_2_mean_abs)
+    print("pos_4_mean_abs: ", pos_4_mean_abs)
+
+    print("pos_nrmse_2: ", pos_nrmse_2)
+    print("pos_nrmse_4: ", pos_nrmse_4)
+
 def main(folder_name):
     base_folder = './.data'  # Adjust this to your actual folder structure
     folder_path = os.path.join(base_folder, folder_name)
@@ -207,6 +254,7 @@ def main(folder_name):
     num_data = 3 + len(dynamics_vars) - 1
 
     plot_data(kinematics_data, dynamics_data, num_data)
+    calculate_errors(kinematics_data, dynamics_data)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

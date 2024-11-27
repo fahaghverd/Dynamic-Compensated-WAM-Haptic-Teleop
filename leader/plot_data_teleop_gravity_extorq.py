@@ -168,18 +168,6 @@ def plot_data(kinematics_data, dynamics_data, num_data):
     plt.ylabel('External Torque')
     plt.legend()
 
-    plt.subplot(num_data, 2, 15)
-    plt.plot(dynamics_time, dynamics_data['PD'][:, 0])
-    plt.title('Joint 2 WAM PD')
-    plt.xlabel('Time (s)')
-    plt.ylabel('PD')
-
-    plt.subplot(num_data, 2, 16)
-    plt.plot(dynamics_time, dynamics_data['PD'][:, 2])
-    plt.title('Joint 4 WAM PD')
-    plt.xlabel('Time (s)')
-    plt.ylabel('PD')
-
     plt.show()
 
 
@@ -241,11 +229,11 @@ def calculate_errors(kinematics_data, dynamics_data):
     calculated_extorq_4 = dynamics_data['calculated external torque'][:, 2]
     extorq_measurement_nrmse_4 = calculate_nrmse(applied_extorq_4, calculated_extorq_4)
 
-    pos_2_mean_abs = np.mean(np.abs(pos_feedback_2))
-    pos_4_mean_abs = np.mean(np.abs(pos_feedback_4))
+    impedance_joint_2 = dynamics_data['impedance'][:, 0]
+    impedance_rms_2 = calculate_rms(impedance_joint_2)
 
-    print("pos_2_mean_abs: ", pos_2_mean_abs)
-    print("pos_4_mean_abs: ", pos_4_mean_abs)
+    impedance_joint_4 = dynamics_data['impedance'][:, 2]
+    impedance_rms_4 = calculate_rms(impedance_joint_4)
 
     print("pos_nrmse_2: ", pos_nrmse_2)
     print("pos_nrmse_4: ", pos_nrmse_4)

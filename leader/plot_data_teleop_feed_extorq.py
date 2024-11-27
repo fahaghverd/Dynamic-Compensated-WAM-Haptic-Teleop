@@ -164,13 +164,13 @@ def plot_data(kinematics_data, dynamics_data, num_data):
     plt.xlabel('Time (s)')
     plt.ylabel('Inverse Dynamic')
 
-    # plt.subplot(num_data, 2, 15)
-    # plt.plot(dynamics_time, dynamics_data['applied external torque'][:, 0], label='Applied Joint 2 External Torque', linestyle='--')
-    # plt.plot(dynamics_time, dynamics_data['calculated external torque'][:, 0], label='Calculated Joint 2 External Torque', linestyle='-')
-    # plt.title('Joint 2 External Torque')
-    # plt.xlabel('Time (s)')
-    # plt.ylabel('External Torque')
-    # # plt.legend()
+    plt.subplot(num_data, 2, 15)
+    plt.plot(dynamics_time, dynamics_data['applied external torque'][:, 0], label='Applied Joint 2 External Torque', linestyle='--')
+    plt.plot(dynamics_time, dynamics_data['calculated external torque'][:, 0], label='Calculated Joint 2 External Torque', linestyle='-')
+    plt.title('Joint 2 External Torque')
+    plt.xlabel('Time (s)')
+    plt.ylabel('External Torque')
+    # plt.legend()
 
     plt.subplot(num_data, 2, 16)
     plt.plot(dynamics_time, dynamics_data['applied external torque'][:, 2], label='Applied Joint 4 External Torque', linestyle='--')
@@ -195,6 +195,18 @@ def plot_data(kinematics_data, dynamics_data, num_data):
     plt.title('Joint 4 Impedance')
     plt.xlabel('Time (s)')
     plt.ylabel('Impedance')
+
+    plt.subplot(num_data, 2, 17)
+    plt.plot(dynamics_time, dynamics_data['PD'][:, 0])
+    plt.title('Joint 2 WAM PD')
+    plt.xlabel('Time (s)')
+    plt.ylabel('PD')
+
+    plt.subplot(num_data, 2, 18)
+    plt.plot(dynamics_time, dynamics_data['PD'][:, 2])
+    plt.title('Joint 4 WAM PD')
+    plt.xlabel('Time (s)')
+    plt.ylabel('PD')
 
 
     plt.show()
@@ -264,12 +276,6 @@ def calculate_errors(kinematics_data, dynamics_data):
     impedance_joint_4 = dynamics_data['impedance'][:, 2]
     impedance_rms_4 = calculate_rms(impedance_joint_4)
 
-    pos_2_mean_abs = np.mean(np.abs(pos_feedback_2))
-    pos_4_mean_abs = np.mean(np.abs(pos_feedback_4))
-
-    print("pos_2_mean_abs: ", pos_2_mean_abs)
-    print("pos_4_mean_abs: ", pos_4_mean_abs)
-
     print("pos_nrmse_2: ", pos_nrmse_2)
     print("pos_nrmse_4: ", pos_nrmse_4)
 
@@ -301,10 +307,19 @@ def main(folder_name):
     print("PD_2: ", PD_2)
     print("PD_4: ", PD_4)
 
-    # cal_extorq = (dynamics_data[dynamics_vars[4]] - dynamics_data[dynamics_vars[3]] - (dynamics_data[dynamics_vars[1]] - dynamics_data[dynamics_vars[2]] - dynamics_data[dynamics_vars[3]] - dynamics_data[dynamics_vars[5]]))
-    # cal_extorq = dynamics_data[dynamics_vars[3]] - dynamics_data[dynamics_vars[6]] - dynamics_data[dynamics_vars[4]]
-    # dynamics_data['calculated external torque'] = cal_extorq
-    # dynamics_vars.append("calculated external torque")
+    cal_extorq = (dynamics_data[dynamics_vars[4]] - dynamics_data[dynamics_vars[3]] - (dynamics_data[dynamics_vars[1]] - dynamics_data[dynamics_vars[2]] - dynamics_data[dynamics_vars[3]] - dynamics_data[dynamics_vars[5]]))
+    cal_extorq = dynamics_data[dynamics_vars[3]] - dynamics_data[dynamics_vars[6]] - dynamics_data[dynamics_vars[4]]
+    dynamics_data['calculated external torque'] = cal_extorq
+    dynamics_vars.append("calculated external torque")
+
+    # Impedance Calculation and Appending
+    velocity_threshold = 0.01  # Define a threshold for velocity
+    min_len = len(kinematics_data['feedback joint vel'])  # Use the minimum length to match time ranges
+    valid_indices = np.abs(kinematics_data['feedback joint vel'][:min_len, :]) > velocity_threshold
+    impedance_data = np.where(valid_indices, dynamics_data['applied external torque'][:min_len, :] / (kinematics_data['feedback joint vel'][:min_len, :] + 1e-6), np.nan)
+    dynamics_data['impedance'] = impedance_data
+    dynamics_vars.append("impedance")
+
     num_data = 3 + len(dynamics_vars) - 1
     print(num_data)
     
