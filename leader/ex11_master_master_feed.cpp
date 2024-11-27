@@ -193,7 +193,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	systems::Ramp time(pm.getExecutionManager(), 1.0);
 	double coeff_default = 0.1;
 	double coeff = getEnvDouble("coeff_tanh", coeff_default);
-	Dynamics<DOF> feedFWD(coeff); 
+	Dynamics<DOF> feedFWD; 
 
 	connect(mm.output, hp1.input);
 	connect(hp1.output, hp2.input);
@@ -209,7 +209,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	connect(feedFWD.dynamicsFeedFWD, feedSat.input);
 	
 	//ID for arm dynamics
-	Dynamics<DOF> inverseDyn(coeff);
+	Dynamics<DOF> inverseDyn;
 	systems::FirstOrderFilter<jp_type> hp3;
 	systems::FirstOrderFilter<jp_type> hp4;
 	hp3.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
@@ -244,14 +244,15 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			PERIOD_MULTIPLIER);
 
 	//	RT Logging stuff : jt_types
-	systems::TupleGrouper<double, jt_type, jt_type, jt_type, jt_type> tg_dynamics;
+	systems::TupleGrouper<double, jt_type, jt_type, jt_type, jt_type, jt_type> tg_dynamics;
 	systems::connect(timelog.output, tg_dynamics.template getInput<0>());
 	systems::connect(wam.jtSum.output, tg_dynamics.template getInput<1>());
 	systems::connect(wam.gravity.output, tg_dynamics.template getInput<2>());
 	systems::connect(feedFWD.dynamicsFeedFWD, tg_dynamics.template getInput<3>());	
 	systems::connect(inverseDyn.dynamicsFeedFWD, tg_dynamics.template getInput<4>());
+	systems::connect(wam.jpController.controlOutput, tg_dynamics.template getInput<5>());
 
-	typedef boost::tuple<double, jt_type, jt_type, jt_type, jt_type> tuple_type_dynamics;
+	typedef boost::tuple<double, jt_type, jt_type, jt_type, jt_type, jt_type> tuple_type_dynamics;
 	systems::PeriodicDataLogger<tuple_type_dynamics> logger_dynamics(
 			pm.getExecutionManager(),
 			new log::RealTimeWriter<tuple_type_dynamics>(tmpFile_dynamics, PERIOD_MULTIPLIER * pm.getExecutionManager()->getPeriod()),
@@ -393,7 +394,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	//Config File Writing
 	configFile << "Master Master Teleop with Dynamic Compensation-Leader.\n";
 	configFile << "Kinematics data: time, desired joint pos, feedback joint pos, desired joint vel, feedback joint vel, desired joint acc, feedback joint acc.\n";
-	configFile << "Dynamics data: time, wam joint torque input, wam gravity input, dynamic feed forward, inverse dynamic.\n";
+	configFile << "Dynamics data: time, wam joint torque input, wam gravity input, dynamic feed forward, inverse dynamic, PD\n";
 	configFile << "Joint Position PID Controller: \nkp: " << wam.jpController.getKp() << "\nki: " << wam.jpController.getKi()<<  "\nkd: "<< wam.jpController.getKd() <<"\nControl Signal Limit: " << wam.jpController.getControlSignalLimit() <<".\n";
 	configFile << "Sync Pos:" << SYNC_POS;
 	configFile << "\nDesired Joint Vel Saturation Limit: " << jvLimits;

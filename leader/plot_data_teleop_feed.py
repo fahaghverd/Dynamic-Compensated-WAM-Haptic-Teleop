@@ -100,7 +100,7 @@ def plot_data(kinematics_data, dynamics_data, num_data):
     # Subplot for Joint 2 Acceleration
     plt.subplot(num_data, 2, 5)
     plt.plot(kinematics_time, kinematics_data['desired joint acc'][:, 0], label='Desired Joint 2 Acceleration', linestyle='--')
-    plt.plot(kinematics_time, kinematics_data['feedback joint acc.'][:, 0], label='Feedback Joint 2 Acceleration', linestyle='-')
+    plt.plot(kinematics_time, kinematics_data['feedback joint acc'][:, 0], label='Feedback Joint 2 Acceleration', linestyle='-')
     plt.title('Joint 2 Acceleration')
     plt.xlabel('Time (s)')
     plt.ylabel('Acceleration')
@@ -109,7 +109,7 @@ def plot_data(kinematics_data, dynamics_data, num_data):
     # Subplot for Joint 4 Acceleration
     plt.subplot(num_data, 2, 6)
     plt.plot(kinematics_time, kinematics_data['desired joint acc'][:, 2], label='Desired Joint 4 Acceleration', linestyle='--')
-    plt.plot(kinematics_time, kinematics_data['feedback joint acc.'][:, 2], label='Feedback Joint 4 Acceleration', linestyle='-')
+    plt.plot(kinematics_time, kinematics_data['feedback joint acc'][:, 2], label='Feedback Joint 4 Acceleration', linestyle='-')
     plt.title('Joint 4 Acceleration')
     plt.xlabel('Time (s)')
     plt.ylabel('Acceleration')
@@ -154,16 +154,30 @@ def plot_data(kinematics_data, dynamics_data, num_data):
     plt.ylabel('Dynamic Feed Forward Input')
 
     plt.subplot(num_data, 2, 13)
-    plt.plot(dynamics_time, dynamics_data['inverse dynamic.'][:, 0])
+    plt.plot(dynamics_time, dynamics_data['inverse dynamic'][:, 0])
     plt.title('Joint 2 WAM Inverse Dynamic')
     plt.xlabel('Time (s)')
     plt.ylabel('Inverse Dynamic')
 
     plt.subplot(num_data, 2, 14)
-    plt.plot(dynamics_time, dynamics_data['inverse dynamic.'][:, 2])
+    plt.plot(dynamics_time, dynamics_data['inverse dynamic'][:, 2])
     plt.title('Joint 4 WAM Inverse Dynamic')
     plt.xlabel('Time (s)')
     plt.ylabel('Inverse Dynamic')
+
+    plt.subplot(num_data, 2, 15)
+    plt.plot(dynamics_time, dynamics_data['calculated external torque'][:, 0], label='Calculated Joint 2 External Torque', linestyle='-')
+    plt.title('Joint 2 External Torque')
+    plt.xlabel('Time (s)')
+    plt.ylabel('External Torque')
+    plt.legend()
+
+    plt.subplot(num_data, 2, 16)
+    plt.plot(dynamics_time, dynamics_data['calculated external torque'][:, 2], label='Calculated Joint 4 External Torque', linestyle='-')
+    plt.title('Joint 4 External Torque')
+    plt.xlabel('Time (s)')
+    plt.ylabel('External Torque')
+    plt.legend()
 
     plt.show()
 
@@ -183,6 +197,11 @@ def main(folder_name):
     # Read data from kinematics and dynamics files
     kinematics_data = read_data(kinematics_file, kinematics_vars)
     dynamics_data = read_data(dynamics_file, dynamics_vars)
+
+    cal_extorq = dynamics_data[dynamics_vars[3]] + dynamics_data[dynamics_vars[2]]- (dynamics_data[dynamics_vars[1]]) 
+    dynamics_data['calculated external torque'] = cal_extorq
+    dynamics_vars.append("calculated external torque")
+
     num_data = 3 + len(dynamics_vars) - 1
 
     plot_data(kinematics_data, dynamics_data, num_data)

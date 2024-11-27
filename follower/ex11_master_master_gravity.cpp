@@ -145,9 +145,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	systems::connect(wam.jpOutput, mm.input);
 
 	//ID for arm dynamics
-	double coeff_default = 0.1;
-	double coeff = getEnvDouble("coeff_tanh", coeff_default);
-	Dynamics<DOF> inverseDyn(coeff);
+	Dynamics<DOF> inverseDyn;
 	double h_omega_p_default = 25.0;
 	double h_omega_p = getEnvDouble("h_omega", h_omega_p_default);
 	systems::FirstOrderFilter<jp_type> hp3;
@@ -198,13 +196,14 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			PERIOD_MULTIPLIER);
 
 	//	RT Logging stuff : jt_types
-	systems::TupleGrouper<double, jt_type, jt_type, jt_type> tg_dynamics;
+	systems::TupleGrouper<double, jt_type, jt_type, jt_type, jt_type> tg_dynamics;
 	systems::connect(timelog.output, tg_dynamics.template getInput<0>());
 	systems::connect(wam.jtSum.output, tg_dynamics.template getInput<1>());
 	systems::connect(wam.gravity.output, tg_dynamics.template getInput<2>());
 	systems::connect(inverseDyn.dynamicsFeedFWD, tg_dynamics.template getInput<3>());
+	systems::connect(wam.jpController.controlOutput, tg_dynamics.template getInput<4>());
 
-	typedef boost::tuple<double, jt_type, jt_type, jt_type> tuple_type_dynamics;
+	typedef boost::tuple<double, jt_type, jt_type, jt_type, jt_type> tuple_type_dynamics;
 	systems::PeriodicDataLogger<tuple_type_dynamics> logger_dynamics(
 			pm.getExecutionManager(),
 			new log::RealTimeWriter<tuple_type_dynamics>(tmpFile_dynamics, PERIOD_MULTIPLIER * pm.getExecutionManager()->getPeriod()),
@@ -350,7 +349,6 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	// configFile << "\nCurrent Joint Acc Saturation Limit: " << jaLimits;
 	configFile << "\nHigh Pass Filter Frq used to get desired vel and acc:" << h_omega_p;
 	configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega_p;
-	configFile << "\nTanh Coeef in Dynamics:" << coeff;
 
 	log::Reader<tuple_type_kinematics> lr_kinematics(tmpFile_kinematics);
 	lr_kinematics.exportCSV(kinematicsFileName.c_str());

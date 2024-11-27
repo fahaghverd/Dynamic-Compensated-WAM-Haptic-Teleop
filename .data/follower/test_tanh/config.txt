@@ -1,0 +1,16 @@
+Master Master Teleop with Dynamic Compensation-Follower.
+Kinematics data: time, desired joint pos, feedback joint pos, desired joint vel, feedback joint vel, desired joint acc, feedback joint acc.
+Dynamics data: time, wam joint torque input, wam gravity input, dynamic feed forward, inverse dynamic.
+Joint Position PID Controller: 
+kp: [750, 1000, 400, 300, 10, 10, 2.5]
+ki: [2.5, 5, 2, 0.5, 0.5, 0.5, 0.1]
+kd: [7.5, 20, 4.2, 2.3, 0.15, 0.3, 0.05]
+Control Signal Limit: [30, 40, 20, 15, 5, 5, 5].
+Sync Pos:[0, -1.5, -0.01, 3.11, 0, 0, 0]
+Desired Joint Vel Saturation Limit: [0.1, 1.5, 1.5, 1.5, 0.1, 0.1, 0.1]
+Desired Joint Acc Saturation Limit: [0.1, 1.5, 1.5, 1.5, 0.1, 0.1, 0.1]
+Current Joint Acc Saturation Limit: [0.1, 1.5, 1.5, 1.5, 0.1, 0.1, 0.1]
+FeedFwd Torque Saturation Limit: [0.1, 15, 15, 10, 0.1, 0.1, 0.1]
+High Pass Filter Frq used to get desired vel and acc:25
+High Pass Filter Frq used to get current acc:25
+Tanh Coeef in Dynamics:0.001

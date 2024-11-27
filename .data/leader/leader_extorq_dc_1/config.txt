@@ -1,0 +1,12 @@
+Master Master Teleop with Gravity Compensation and Sinusoidal External Torque-Leader.
+Kinematics data: time, desired joint pos, feedback joint pos, desired joint vel, feedback joint vel, desired joint acc, feedback joint acc.
+Dynamics data: time, wam joint torque input, wam gravity input, inverse dynamic, applied external torque, PD
+Joint Position PID Controller: 
+kp: [1000, 400, 200]
+ki: [5, 2.5, 0.5]
+kd: [8, 3.3, 0.8]
+Control Signal Limit: [50, 40, 30].
+Sync Pos:[0, 0, 0.2]
+High Pass Filter Frq used to get desired vel and acc:20
+High Pass Filter Frq used to get current acc:20
+Frequency and amplitude for the applied external torque: F:0.5A: [8, 0, 2]
