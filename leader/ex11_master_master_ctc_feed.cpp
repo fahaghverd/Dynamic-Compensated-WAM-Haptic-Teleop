@@ -194,9 +194,9 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	//Definning syn pos 
 	jp_type SYNC_POS_default; // the position each WAM should move to before linking
-    SYNC_POS_default[0] = 0.0;
-    SYNC_POS_default[1] = 0.0;
-    SYNC_POS_default[2] = 0.0;
+    SYNC_POS_default[0] = -1.5;
+    SYNC_POS_default[1] = -0.01;
+    SYNC_POS_default[2] = 3.11;
 	jp_type SYNC_POS = jp_type(getEnvEigenVector<DOF>("SYNC_POS", v_type(SYNC_POS_default)));
 
 	//Master Master System
@@ -210,8 +210,10 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	hp1.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
 	systems::FirstOrderFilter<jp_type> hp2;
 	hp2.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
-	systems::Gain<jp_type, double, jv_type> jvCur(1.0);
-	systems::Gain<jp_type, double, ja_type> jaCur(1.0);
+	systems::Gain<jp_type, double, jv_type> jvDes(1.0);
+	systems::Gain<jp_type, double, ja_type> jaDes(1.0);
+	
+
 	jv_type jvLimits_default;
 	jvLimits_default << 5, 5, 5;
 	jv_type jvLimits = jv_type(getEnvEigenVector<DOF>("jv_limits", v_type(jvLimits_default)));
@@ -224,16 +226,14 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	jtLimits_default << 20, 20, 20;
 	jt_type jtLimits = jt_type(getEnvEigenVector<DOF>("jtLimits", v_type(jtLimits_default)));
 	systems::Callback<jt_type> feedSat(boost::bind(saturateJt<DOF>,_1, jtLimits));
-	double coeff_default = 1000;
-	double coeff = getEnvDouble("coeff_tanh", coeff_default);
 	Dynamics<DOF> feedFWD;
 
 	connect(mm.output, hp1.input);
 	connect(hp1.output, hp2.input);
-	connect(hp2.output, jaCur.input);
-	connect(hp1.output, jvCur.input);
-	connect(jvCur.output, jvSat.input);
-	connect(jaCur.output, jaSat.input);
+	connect(hp2.output, jaDes.input);
+	connect(hp1.output, jvDes.input);
+	connect(jaDes.output, jaSat.input);
+	connect(jvDes.output, jvSat.input);
 	pm.getExecutionManager()->startManaging(hp2);
 	sleep(1);
 
@@ -241,14 +241,23 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	connect(jvSat.output, feedFWD.jvInputDynamics);
     connect(jaSat.output, feedFWD.jaInputDynamics);
 
+	connect(feedFWD.dynamicsFeedFWD, feedSat.input);
+
 	//ID for arm dynamics
 	Dynamics<DOF> inverseDyn;
-	connect(wam.jpOutput, inverseDyn.jpInputDynamics); 
-	connect(jvCur.output, inverseDyn.jvInputDynamics);
-    connect(jaCur.output, inverseDyn.jaInputDynamics);
+	systems::FirstOrderFilter<jp_type> hp3;
+	hp3.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
+	systems::FirstOrderFilter<jp_type> hp4;
+	hp4.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
+	systems::Gain<jp_type, double, ja_type> jaCur(1.0);
 
-	connect(feedFWD.dynamicsFeedFWD, feedSat.input);
-	
+	connect(wam.jpOutput, hp3.input);
+	connect(hp3.output, hp4.input);
+	connect(hp4.output, jaCur.input);
+
+	connect(wam.jpOutput, inverseDyn.jpInputDynamics); 
+	connect(wam.jvOutput, inverseDyn.jvInputDynamics);
+    connect(jaCur.output, inverseDyn.jaInputDynamics);
 	
 	//	RT Logging stuff : config
 	systems::Ramp timelog(pm.getExecutionManager(), 1.0);
@@ -311,7 +320,6 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				wam.trackReferenceSignal(mm.output);
 				connect(feedSat.output, wam.input);
 
-				btsleep(0.1); 
 				if (mm.isLinked()) {
 					printf("Linked with remote WAM.\n");
 
@@ -429,8 +437,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	configFile << "\nDesired Joint Acc Saturation Limit: " << jaLimits;
 	configFile << "\nCurrent Joint Acc Saturation Limit: " << jaLimits;
 	configFile << "\nFeedFwd Torque Saturation Limit: " << jtLimits;
-	configFile << "\nHigh Pass Filter Frq used to get desired vel and acc:" << h_omega_p;
-	configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega_p;
+	configFile << "\nHigh Pass Filter Frq:" << h_omega_p;
+	// configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega_p;
 
 	log::Reader<tuple_type_kinematics> lr_kinematics(tmpFile_kinematics);
 	lr_kinematics.exportCSV(kinematicsFile);

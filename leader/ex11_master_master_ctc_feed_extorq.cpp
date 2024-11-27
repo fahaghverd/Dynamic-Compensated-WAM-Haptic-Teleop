@@ -343,26 +343,26 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 					connect(tg_kinematics.output, logger_kinematics.input);
 					connect(tg_dynamics.output, logger_dynamics.input);
+
+									//Applying External Torque
+					time.stop();
+					time.reset();
+					timelog.start();
+					printf("Logging started.\n");
+					time.start();
+					btsleep((2/f));
+					time.stop();
+					time.reset();
+					logger_kinematics.closeLog();
+					logger_dynamics.closeLog();
+					printf("Logging stopped.\n");
+					timelog.stop();
+					timelog.reset();
 					
 				} else {
 					printf("WARNING: Linking was unsuccessful.\n");
 				}
-				
-				//Applying External Torque
-				time.stop();
-				time.reset();
-				timelog.start();
-				printf("Logging started.\n");
-				time.start();
-				btsleep((2/f));
-				time.stop();
-				time.reset();
-				logger_kinematics.closeLog();
-				logger_dynamics.closeLog();
-				printf("Logging stopped.\n");
-				timelog.stop();
-				timelog.reset();
-
+			
 
 			}
 
@@ -463,7 +463,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	//Config File Writing
 	configFile << "Master Master Teleop with Dynamic Compensation and Sinusoidal External Torque-Leader.\n";
 	configFile << "Kinematics data: time, desired joint pos, feedback joint pos, desired joint vel, feedback joint vel, desired joint acc, feedback joint acc\n";
-	configFile << "Dynamics data: time, wam joint torque input, wam gravity input, dynamic feed forward, inverse dynamic, applied external torque\n";
+	configFile << "Dynamics data: time, wam joint torque input, wam gravity input, dynamic feed forward, inverse dynamic, PD, applied external torque\n";
 	configFile << "Joint Position PID Controller: \nkp: " << wam.jpController.getKp() << "\nki: " << wam.jpController.getKi()<<  "\nkd: "<< wam.jpController.getKd() <<"\nControl Signal Limit: " << wam.jpController.getControlSignalLimit() <<".\n";
 	configFile << "Sync Pos:" << SYNC_POS;
 	configFile << "\nDesired Joint Vel Saturation Limit: " << jvLimits;
