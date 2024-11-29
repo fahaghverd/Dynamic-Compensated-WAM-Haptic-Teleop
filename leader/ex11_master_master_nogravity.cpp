@@ -5,6 +5,9 @@
  *      Author: Christopher Dellin
  *      Author: Dan Cody
  *      Author: Brian Zenowich
+ *  Modified on: Sep 2024
+ * 		Author: Faezeh Haghverd
+ * 		Author: Amir Noohian
  */
 
 #include <iostream>
@@ -12,7 +15,7 @@
 #include <vector>
 
 #include <boost/thread.hpp>
-
+#include <barrett/log.h>	
 #include <barrett/detail/stl_utils.h>
 #include <barrett/os.h>
 #include <barrett/products/product_manager.h>
@@ -22,14 +25,11 @@
 #define BARRETT_SMF_VALIDATE_ARGS
 #define BARRETT_SMF_WAM_CONFIG_PATH "wam3noJ1"
 #include <barrett/standard_main_function.h>
-
+#include <Dynamics.hpp>
 #include "ex11_master_master.h"
 
 using namespace barrett;
 using detail::waitForEnter;
-
-void ghcEntryPoint(GimbalsHandController *ghc, const char *remoteHost);
-void handEntryPoint(Hand *hand, const char *remoteHost);
 
 bool validate_args(int argc, char **argv) {
     if (argc != 2 && argc != 3) {
@@ -42,28 +42,159 @@ bool validate_args(int argc, char **argv) {
     return true;
 }
 
+
+// Function to split a string by a delimiter and return a vector of the elements
+std::vector<std::string> split(const std::string& str, char delimiter) {
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(str);
+    while (std::getline(tokenStream, token, delimiter)) {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
+// Merged function to get an Eigen::VectorXd from an environment variable
+template <size_t DOF>
+math::Matrix<DOF, 1, double> getEnvEigenVector(const std::string& varName, const math::Matrix<DOF, 1, double>& defaultValue) {
+    const char* envVar = std::getenv(varName.c_str());
+    if (envVar) {
+        std::vector<std::string> stringElements = split(envVar, ',');
+        Eigen::VectorXd eigenVec(stringElements.size());
+        for (size_t i = 0; i < stringElements.size(); ++i) {
+            std::istringstream iss(stringElements[i]);
+            double value;
+            if (iss >> value) {
+                eigenVec(i) = value;
+            } else {
+                std::cerr << "Invalid value in vector for " << varName << std::endl;
+                return defaultValue;
+            }
+        }
+        return eigenVec;
+    }
+    return defaultValue;
+}
+
+// Function to get a double parameter from an environment variable or return a default value
+double getEnvDouble(const std::string& varName, double defaultValue) {
+    const char* envVar = std::getenv(varName.c_str());
+    if (envVar) {
+        std::istringstream iss(envVar);
+        double value;
+        if (iss >> value) {
+            return value;
+        } else {
+            std::cerr << "Invalid double value for " << varName << std::endl;
+        }
+    }
+    return defaultValue;
+}
+
 template <size_t DOF> int wam_main(int argc, char **argv, ProductManager &pm, systems::Wam<DOF> &wam) {
-    BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
+	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
+	const jp_type HOME_POS = wam.getJointPositions();
+	// wam.gravityCompensate();
 
-    jp_type SYNC_POS; // the position each WAM should move to before linking
-    SYNC_POS[0] = -1.5;
-    SYNC_POS[1] = -0.01;
-    SYNC_POS[2] = 3.11;
+	char tmpFile_kinematics[] = "/tmp/btXXXXXX";
+	if (mkstemp(tmpFile_kinematics) == -1) {
+		printf("ERROR: Couldn't create temporary file!\n");
+		return 1;
+	}
 
+
+	char tmpFile_dynamics[] = "/tmp/btXXXXXX";
+	if (mkstemp(tmpFile_dynamics) == -1) {
+		printf("ERROR: Couldn't create temporary file!\n");
+		return 1;
+	}
+
+
+	//Definning syn pos 
+	jp_type SYNC_POS_default; // the position each WAM should move to before linking
+    SYNC_POS_default[1] = -1.5;
+    SYNC_POS_default[2] = -0.01;
+    SYNC_POS_default[3] = 3.11;
+	jp_type SYNC_POS = jp_type(getEnvEigenVector<DOF>("SYNC_POS", v_type(SYNC_POS_default)));
+
+    //Master Master System
     MasterMaster<DOF> mm(pm.getExecutionManager(), argv[1]);
     systems::connect(wam.jpOutput, mm.input);
 
-    // wam.gravityCompensate();
+    //ID for arm dynamics
+	double coeff_default = 1000;
+	double coeff = getEnvDouble("coeff_tanh", coeff_default);
+    Dynamics<DOF> inverseDyn;
+	double h_omega_p_default = 25.0;
+	double h_omega_p = getEnvDouble("h_omega", h_omega_p_default);
+	systems::FirstOrderFilter<jp_type> hp3;
+	systems::FirstOrderFilter<jp_type> hp4;
+	hp3.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
+	hp4.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
+	systems::Gain<jp_type, double, ja_type> jaCur(1.0);
+    
 
-    // wam.jpController.setKp
+	connect(wam.jpOutput, hp3.input);
+	connect(hp3.output, hp4.input);
+	connect(hp4.output, jaCur.input);
+	pm.getExecutionManager()->startManaging(hp4);
+	sleep(1);
+	connect(wam.jpOutput, inverseDyn.jpInputDynamics);
+	connect(wam.jvOutput, inverseDyn.jvInputDynamics);
+    connect(jaCur.output, inverseDyn.jaInputDynamics);
+
+    //Desired Vel and Acc
+	systems::FirstOrderFilter<jp_type> hp1;
+	hp1.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
+	systems::FirstOrderFilter<jp_type> hp2;
+	hp2.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
+	systems::Gain<jp_type, double, jv_type> jvDes(1.0);
+	systems::Gain<jp_type, double, ja_type> jaDes(1.0);
+    connect(mm.output, hp1.input);
+	connect(hp1.output, hp2.input);
+	connect(hp2.output, jaDes.input);
+	connect(hp1.output, jvDes.input);
+	pm.getExecutionManager()->startManaging(hp2);
+	sleep(1);
+
+	//	RT Logging stuff : config
+	systems::Ramp timelog(pm.getExecutionManager(), 1.0);
+	systems::TupleGrouper<double, jp_type, jp_type, jv_type, jv_type, ja_type, ja_type> tg_kinematics;
+	systems::connect(timelog.output, tg_kinematics.template getInput<0>());
+	systems::connect(mm.output, tg_kinematics.template getInput<1>());
+	systems::connect(wam.jpOutput, tg_kinematics.template getInput<2>());
+	systems::connect(jvDes.output, tg_kinematics.template getInput<3>());
+	systems::connect(wam.jvOutput, tg_kinematics.template getInput<4>());
+	systems::connect(jaDes.output, tg_kinematics.template getInput<5>());
+	systems::connect(jaCur.output, tg_kinematics.template getInput<6>());
+
+	typedef boost::tuple<double, jp_type, jp_type, jv_type, jv_type, ja_type, ja_type> tuple_type_kinematics;
+	const size_t PERIOD_MULTIPLIER = 1;
+	systems::PeriodicDataLogger<tuple_type_kinematics> logger_kinematics(
+			pm.getExecutionManager(),
+			new log::RealTimeWriter<tuple_type_kinematics>(tmpFile_kinematics, PERIOD_MULTIPLIER * pm.getExecutionManager()->getPeriod()),
+			PERIOD_MULTIPLIER);
+
+	//	RT Logging stuff : jt_types
+	systems::TupleGrouper<double, jt_type, jt_type, jt_type, jt_type> tg_dynamics;
+	systems::connect(timelog.output, tg_dynamics.template getInput<0>());
+	systems::connect(wam.jtSum.output, tg_dynamics.template getInput<1>());
+	systems::connect(wam.gravity.output, tg_dynamics.template getInput<2>());
+	systems::connect(inverseDyn.dynamicsFeedFWD, tg_dynamics.template getInput<3>());
+    systems::connect(wam.jpController.controlOutput, tg_dynamics.template getInput<4>());
+
+	typedef boost::tuple<double, jt_type, jt_type, jt_type, jt_type> tuple_type_dynamics;
+	systems::PeriodicDataLogger<tuple_type_dynamics> logger_dynamics(
+			pm.getExecutionManager(),
+			new log::RealTimeWriter<tuple_type_dynamics>(tmpFile_dynamics, PERIOD_MULTIPLIER * pm.getExecutionManager()->getPeriod()),
+			PERIOD_MULTIPLIER);
+
+
     std::vector<std::string> autoCmds;
-    if (argc == 3) { // auto init
-        autoCmds.push_back("l");
-    }
-
     std::string line;
     v_type gainTmp;
-    while (true) {
+    bool exit_called = false;
+    while (!exit_called) {
         if (autoCmds.empty()) {
             printf(">>> ");
             std::getline(std::cin, line);
@@ -83,10 +214,14 @@ template <size_t DOF> int wam_main(int argc, char **argv, ProductManager &pm, sy
                 waitForEnter();
                 mm.tryLink();
                 wam.trackReferenceSignal(mm.output);
+                					connect(tg_kinematics.output, logger_kinematics.input);
+					connect(tg_dynamics.output, logger_dynamics.input);
 
                 btsleep(0.1); // wait an execution cycle or two
                 if (mm.isLinked()) {
-                    printf("Linked with remote WAM.\n");
+                    printf("Linked with remote WAM.\n");	
+
+
                 } else {
                     printf("WARNING: Linking was unsuccessful.\n");
                 }
@@ -94,8 +229,7 @@ template <size_t DOF> int wam_main(int argc, char **argv, ProductManager &pm, sy
 
             break;
 
-
-        case 't':
+        case 't':{
             size_t jointIndex;
             {
                 size_t jointNumber;
@@ -150,15 +284,73 @@ template <size_t DOF> int wam_main(int argc, char **argv, ProductManager &pm, sy
 
             break;
 
+        }
+
+
+		case 'c':{
+				timelog.start();
+				printf("Logging started.\n");
+				break; 
+		}
+
+		case 's':{
+                logger_kinematics.closeLog();
+				logger_dynamics.closeLog();
+				printf("Logging stopped.\n");
+				timelog.stop();
+				timelog.reset();
+				exit_called = true; // Set exit_called to true to break out of the loop
+				break;
+		}
+
         default:
             printf("\n");
             printf("    'l' to toggle linking with other WAM\n");
             printf("    't' to tune control gains\n");
+            printf("    's' to save data\n");
 
             break;
         }
     }
 
+
+// Create the data directory using the provided name
+	std::string folderName = argv[2];
+	// Create the data directory using the provided name
+	std::string command = std::string("mkdir -p .data/") + folderName; // -p flag ensures it doesn't fail if the directory exists
+	if (system(command.c_str()) != 0) {
+    	std::cerr << "Error: Could not create directory." << std::endl;
+    	return 1;
+	}
+
+	std::string kinematicsFilename = ".data/" + folderName + "/kinematics.txt";
+	std::string dynamicsFilename = ".data/" + folderName + "/dynamics.txt";
+	std::string configFilename = ".data/" + folderName + "/config.txt";
+	std::ofstream kinematicsFile(kinematicsFilename);
+	std::ofstream dynamicsFile(dynamicsFilename);
+	std::ofstream configFile(configFilename);
+
+	//Config File Writing
+	configFile << "Master Master Teleop without Gravity Compensation-Leader.\n";
+	configFile << "Kinematics data: time, desired joint pos, feedback joint pos, desired joint vel, feedback joint vel, desired joint acc, feedback joint acc\n";
+	configFile << "Dynamics data: time, wam joint torque input, wam gravity input, inverse dynamic\n";
+	configFile << "Joint Position PID Controller: \nkp: " << wam.jpController.getKp() << "\nki: " << wam.jpController.getKi()<<  "\nkd: "<< wam.jpController.getKd() <<"\nControl Signal Limit: " << wam.jpController.getControlSignalLimit() <<".\n";
+	configFile << "Sync Pos:" << SYNC_POS;
+	// configFile << "\nDesired Joint Vel Saturation Limit: " << jvLimits;
+	// configFile << "\nDesired Joint Acc Saturation Limit: " << jaLimits;
+	// configFile << "\nCurrent Joint Acc Saturation Limit: " << jaLimits;
+	configFile << "\nHigh Pass Filter Frq :" << h_omega_p;
+	// configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega_p;
+
+	log::Reader<tuple_type_kinematics> lr_kinematics(tmpFile_kinematics);
+	lr_kinematics.exportCSV(kinematicsFile);
+	log::Reader<tuple_type_dynamics> lr_Dynamics(tmpFile_dynamics);
+	lr_Dynamics.exportCSV(dynamicsFile);
+	configFile.close();
+	printf("Output written to %s folder.\n", folderName.c_str());
+
+	unlink(tmpFile_kinematics);
+	unlink(tmpFile_dynamics);
+
     return 0;
 }
-

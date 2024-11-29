@@ -69,8 +69,8 @@ rebuild_cache/fast: rebuild_cache
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
-	/usr/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
+	/usr/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -109,19 +109,6 @@ preinstall/fast:
 depend:
 	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
-
-#=============================================================================
-# Target rules for targets named 2DOF_wam_joint_space_ctc_extorq
-
-# Build rule for target.
-2DOF_wam_joint_space_ctc_extorq: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 2DOF_wam_joint_space_ctc_extorq
-.PHONY : 2DOF_wam_joint_space_ctc_extorq
-
-# fast build rule for target.
-2DOF_wam_joint_space_ctc_extorq/fast:
-	$(MAKE) -f CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/build.make CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/build
-.PHONY : 2DOF_wam_joint_space_ctc_extorq/fast
 
 #=============================================================================
 # Target rules for targets named ex11_master_master_nogravity
@@ -189,19 +176,6 @@ ex11_master_master_ctc_feed_extorq/fast:
 .PHONY : ex11_master_master_ctc_feed_extorq/fast
 
 #=============================================================================
-# Target rules for targets named ex11_master_master_feed
-
-# Build rule for target.
-ex11_master_master_feed: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 ex11_master_master_feed
-.PHONY : ex11_master_master_feed
-
-# fast build rule for target.
-ex11_master_master_feed/fast:
-	$(MAKE) -f CMakeFiles/ex11_master_master_feed.dir/build.make CMakeFiles/ex11_master_master_feed.dir/build
-.PHONY : ex11_master_master_feed/fast
-
-#=============================================================================
 # Target rules for targets named ex11_master_master_gravity
 
 # Build rule for target.
@@ -226,33 +200,6 @@ ex11_master_master_gravity_extorq: cmake_check_build_system
 ex11_master_master_gravity_extorq/fast:
 	$(MAKE) -f CMakeFiles/ex11_master_master_gravity_extorq.dir/build.make CMakeFiles/ex11_master_master_gravity_extorq.dir/build
 .PHONY : ex11_master_master_gravity_extorq/fast
-
-2DOF_wam_joint_space_ctc_extorq.o: 2DOF_wam_joint_space_ctc_extorq.cpp.o
-
-.PHONY : 2DOF_wam_joint_space_ctc_extorq.o
-
-# target to build an object file
-2DOF_wam_joint_space_ctc_extorq.cpp.o:
-	$(MAKE) -f CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/build.make CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/2DOF_wam_joint_space_ctc_extorq.cpp.o
-.PHONY : 2DOF_wam_joint_space_ctc_extorq.cpp.o
-
-2DOF_wam_joint_space_ctc_extorq.i: 2DOF_wam_joint_space_ctc_extorq.cpp.i
-
-.PHONY : 2DOF_wam_joint_space_ctc_extorq.i
-
-# target to preprocess a source file
-2DOF_wam_joint_space_ctc_extorq.cpp.i:
-	$(MAKE) -f CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/build.make CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/2DOF_wam_joint_space_ctc_extorq.cpp.i
-.PHONY : 2DOF_wam_joint_space_ctc_extorq.cpp.i
-
-2DOF_wam_joint_space_ctc_extorq.s: 2DOF_wam_joint_space_ctc_extorq.cpp.s
-
-.PHONY : 2DOF_wam_joint_space_ctc_extorq.s
-
-# target to generate assembly for a file
-2DOF_wam_joint_space_ctc_extorq.cpp.s:
-	$(MAKE) -f CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/build.make CMakeFiles/2DOF_wam_joint_space_ctc_extorq.dir/2DOF_wam_joint_space_ctc_extorq.cpp.s
-.PHONY : 2DOF_wam_joint_space_ctc_extorq.cpp.s
 
 ex11_master_master_ID_feed.o: ex11_master_master_ID_feed.cpp.o
 
@@ -362,33 +309,6 @@ ex11_master_master_ctc_feed_extorq.cpp.s:
 	$(MAKE) -f CMakeFiles/ex11_master_master_ctc_feed_extorq.dir/build.make CMakeFiles/ex11_master_master_ctc_feed_extorq.dir/ex11_master_master_ctc_feed_extorq.cpp.s
 .PHONY : ex11_master_master_ctc_feed_extorq.cpp.s
 
-ex11_master_master_feed.o: ex11_master_master_feed.cpp.o
-
-.PHONY : ex11_master_master_feed.o
-
-# target to build an object file
-ex11_master_master_feed.cpp.o:
-	$(MAKE) -f CMakeFiles/ex11_master_master_feed.dir/build.make CMakeFiles/ex11_master_master_feed.dir/ex11_master_master_feed.cpp.o
-.PHONY : ex11_master_master_feed.cpp.o
-
-ex11_master_master_feed.i: ex11_master_master_feed.cpp.i
-
-.PHONY : ex11_master_master_feed.i
-
-# target to preprocess a source file
-ex11_master_master_feed.cpp.i:
-	$(MAKE) -f CMakeFiles/ex11_master_master_feed.dir/build.make CMakeFiles/ex11_master_master_feed.dir/ex11_master_master_feed.cpp.i
-.PHONY : ex11_master_master_feed.cpp.i
-
-ex11_master_master_feed.s: ex11_master_master_feed.cpp.s
-
-.PHONY : ex11_master_master_feed.s
-
-# target to generate assembly for a file
-ex11_master_master_feed.cpp.s:
-	$(MAKE) -f CMakeFiles/ex11_master_master_feed.dir/build.make CMakeFiles/ex11_master_master_feed.dir/ex11_master_master_feed.cpp.s
-.PHONY : ex11_master_master_feed.cpp.s
-
 ex11_master_master_gravity.o: ex11_master_master_gravity.cpp.o
 
 .PHONY : ex11_master_master_gravity.o
@@ -476,20 +396,15 @@ help:
 	@echo "... all (the default if no target is provided)"
 	@echo "... clean"
 	@echo "... depend"
-	@echo "... 2DOF_wam_joint_space_ctc_extorq"
 	@echo "... ex11_master_master_nogravity"
 	@echo "... ex11_master_master_ctc_feed"
 	@echo "... ex11_master_master_ID_feed_extorq"
 	@echo "... rebuild_cache"
 	@echo "... ex11_master_master_ID_feed"
 	@echo "... ex11_master_master_ctc_feed_extorq"
-	@echo "... ex11_master_master_feed"
 	@echo "... ex11_master_master_gravity"
 	@echo "... edit_cache"
 	@echo "... ex11_master_master_gravity_extorq"
-	@echo "... 2DOF_wam_joint_space_ctc_extorq.o"
-	@echo "... 2DOF_wam_joint_space_ctc_extorq.i"
-	@echo "... 2DOF_wam_joint_space_ctc_extorq.s"
 	@echo "... ex11_master_master_ID_feed.o"
 	@echo "... ex11_master_master_ID_feed.i"
 	@echo "... ex11_master_master_ID_feed.s"
@@ -502,9 +417,6 @@ help:
 	@echo "... ex11_master_master_ctc_feed_extorq.o"
 	@echo "... ex11_master_master_ctc_feed_extorq.i"
 	@echo "... ex11_master_master_ctc_feed_extorq.s"
-	@echo "... ex11_master_master_feed.o"
-	@echo "... ex11_master_master_feed.i"
-	@echo "... ex11_master_master_feed.s"
 	@echo "... ex11_master_master_gravity.o"
 	@echo "... ex11_master_master_gravity.i"
 	@echo "... ex11_master_master_gravity.s"

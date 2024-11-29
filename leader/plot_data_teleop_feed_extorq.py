@@ -288,7 +288,7 @@ def calculate_errors(kinematics_data, dynamics_data):
 
 
 def main(folder_name):
-    base_folder = './.data'  # Adjust this to your actual folder structure
+    base_folder = './.data_ral'  # Adjust this to your actual folder structure
     folder_path = os.path.join(base_folder, folder_name)
 
     config_file = os.path.join(folder_path, 'config.txt')
@@ -302,13 +302,14 @@ def main(folder_name):
     kinematics_data = read_data(kinematics_file, kinematics_vars)
     dynamics_data = read_data(dynamics_file, dynamics_vars)
 
-    PD_2 = np.mean(np.abs(dynamics_data[dynamics_vars[5]][:, 0]))
-    PD_4 = np.mean(np.abs(dynamics_data[dynamics_vars[5]][:, 2]))
+    PD_2 = np.mean(np.abs(dynamics_data['PD'][:, 0]))
+    PD_4 = np.mean(np.abs(dynamics_data['PD'][:, 2]))
     print("PD_2: ", PD_2)
     print("PD_4: ", PD_4)
 
-    cal_extorq = (dynamics_data[dynamics_vars[4]] - dynamics_data[dynamics_vars[3]] - (dynamics_data[dynamics_vars[1]] - dynamics_data[dynamics_vars[2]] - dynamics_data[dynamics_vars[3]] - dynamics_data[dynamics_vars[5]]))
-    cal_extorq = dynamics_data[dynamics_vars[3]] - dynamics_data[dynamics_vars[6]] - dynamics_data[dynamics_vars[4]]
+    # cal_extorq = (dynamics_data[dynamics_vars[4]] - dynamics_data[dynamics_vars[3]] - (dynamics_data[dynamics_vars[1]] - dynamics_data[dynamics_vars[2]] - dynamics_data[dynamics_vars[3]] - dynamics_data[dynamics_vars[5]]))
+    # cal_extorq = dynamics_data[dynamics_vars[3]] - dynamics_data[dynamics_vars[6]] - dynamics_data[dynamics_vars[4]]
+    cal_extorq = dynamics_data['inverse dynamic'] - dynamics_data['dynamic feed forward']- (dynamics_data['PD']) 
     dynamics_data['calculated external torque'] = cal_extorq
     dynamics_vars.append("calculated external torque")
 

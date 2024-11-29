@@ -194,7 +194,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	//Definning syn pos 
 	jp_type SYNC_POS_default; // the position each WAM should move to before linking
-    SYNC_POS_default[0] = 0.0;
+    SYNC_POS_default[0] = 0.2;
     SYNC_POS_default[1] = 0.0;
     SYNC_POS_default[2] = 0.0;
 	jp_type SYNC_POS = jp_type(getEnvEigenVector<DOF>("SYNC_POS", v_type(SYNC_POS_default)));
@@ -213,19 +213,17 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	systems::Gain<jp_type, double, jv_type> jvDes(1.0);
 	systems::Gain<jp_type, double, ja_type> jaDes(1.0);
 	jv_type jvLimits_default;
-	jvLimits_default << 5, 5, 5;
+	jvLimits_default << 2, 2, 2;
 	jv_type jvLimits = jv_type(getEnvEigenVector<DOF>("jv_limits", v_type(jvLimits_default)));
 	systems::Callback<jv_type> jvSat(boost::bind(saturateJv<DOF>,_1, jvLimits));
 	ja_type jaLimits_default;
-	jaLimits_default << 5, 5, 5; //Increaseade just to discard it
+	jaLimits_default << 2, 2, 2;
 	ja_type jaLimits = ja_type(getEnvEigenVector<DOF>("ja_limits", v_type(jaLimits_default)));
 	systems::Callback<ja_type> jaSat(boost::bind(saturateJa<DOF>,_1, jaLimits));
 	jt_type jtLimits_default;	
 	jtLimits_default << 20, 20, 20;
 	jt_type jtLimits = jt_type(getEnvEigenVector<DOF>("jtLimits", v_type(jtLimits_default)));
 	systems::Callback<jt_type> feedSat(boost::bind(saturateJt<DOF>,_1, jtLimits));
-	double coeff_default = 1000;
-	double coeff = getEnvDouble("coeff_tanh", coeff_default);
 	Dynamics<DOF> feedFWD;
 
 	connect(mm.output, hp1.input);
@@ -248,16 +246,14 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	hp3.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
 	hp4.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
 	systems::Gain<jp_type, double, ja_type> jaCur(1.0);
-	systems::Gain<jp_type, double, jv_type> jvCur(1.0);
 
 	connect(wam.jpOutput, hp3.input);
 	connect(hp3.output, hp4.input);
 	connect(hp4.output, jaCur.input);
-	connect(hp3.output, jvCur.input);
 	pm.getExecutionManager()->startManaging(hp4);
 	sleep(1);
 	connect(wam.jpOutput, inverseDyn.jpInputDynamics); 
-	connect(jvCur.output, inverseDyn.jvInputDynamics);
+	connect(wam.jvOutput, inverseDyn.jvInputDynamics);
     connect(jaCur.output, inverseDyn.jaInputDynamics);
 
 	//Applied External Torque
@@ -301,8 +297,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	systems::connect(wam.gravity.output, tg_dynamics.template getInput<2>());
 	systems::connect(feedFWD.dynamicsFeedFWD, tg_dynamics.template getInput<3>());	
 	systems::connect(inverseDyn.dynamicsFeedFWD, tg_dynamics.template getInput<4>());
-	systems::connect(extorqFeedFWD.extorq, tg_dynamics.template getInput<5>());
-	systems::connect(wam.jpController.controlOutput, tg_dynamics.template getInput<6>());
+	systems::connect(wam.jpController.controlOutput, tg_dynamics.template getInput<5>());
+	systems::connect(extorqFeedFWD.extorq, tg_dynamics.template getInput<6>());
 
 	typedef boost::tuple<double, jt_type, jt_type, jt_type, jt_type, jt_type, jt_type> tuple_type_dynamics;
 	systems::PeriodicDataLogger<tuple_type_dynamics> logger_dynamics(
@@ -447,21 +443,21 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	// Create the data directory using the provided name
 	std::string folderName = argv[2];
 	// Create the data directory using the provided name
-	std::string command = std::string("mkdir -p .data/") + folderName; // -p flag ensures it doesn't fail if the directory exists
+	std::string command = std::string("mkdir -p .data_ral/") + folderName; // -p flag ensures it doesn't fail if the directory exists
 	if (system(command.c_str()) != 0) {
     	std::cerr << "Error: Could not create directory." << std::endl;
     	return 1;
 	}
 
-	std::string kinematicsFilename = ".data/" + folderName + "/kinematics.txt";
-	std::string dynamicsFilename = ".data/" + folderName + "/dynamics.txt";
-	std::string configFilename = ".data/" + folderName + "/config.txt";
+	std::string kinematicsFilename = ".data_ral/" + folderName + "/kinematics.txt";
+	std::string dynamicsFilename = ".data_ral/" + folderName + "/dynamics.txt";
+	std::string configFilename = ".data_ral/" + folderName + "/config.txt";
 	std::ofstream kinematicsFile(kinematicsFilename);
 	std::ofstream dynamicsFile(dynamicsFilename);
 	std::ofstream configFile(configFilename);
 
 	//Config File Writing
-	configFile << "Master Master Teleop with Dynamic Compensation and Sinusoidal External Torque-Leader.\n";
+	configFile << "Master Master Teleop with FeedFwd Compensation and Sinusoidal External Torque-Leader.\n";
 	configFile << "Kinematics data: time, desired joint pos, feedback joint pos, desired joint vel, feedback joint vel, desired joint acc, feedback joint acc\n";
 	configFile << "Dynamics data: time, wam joint torque input, wam gravity input, dynamic feed forward, inverse dynamic, PD, applied external torque\n";
 	configFile << "Joint Position PID Controller: \nkp: " << wam.jpController.getKp() << "\nki: " << wam.jpController.getKi()<<  "\nkd: "<< wam.jpController.getKd() <<"\nControl Signal Limit: " << wam.jpController.getControlSignalLimit() <<".\n";
@@ -470,9 +466,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	configFile << "\nDesired Joint Acc Saturation Limit: " << jaLimits;
 	configFile << "\nCurrent Joint Acc Saturation Limit: " << jaLimits;
 	configFile << "\nFeedFwd Torque Saturation Limit: " << jtLimits;
-	configFile << "\nHigh Pass Filter Frq used to get desired vel and acc:" << h_omega_p;
-	configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega_p;
-	configFile << "\nTanh Coeef in Dynamics:" << coeff;
+	configFile << "\nHigh Pass Filter Frq used:" << h_omega_p;
+	// configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega_p;
 	configFile << "\nFrequency and amplitude for the applied external torque: F:" << f << "A: " << A;
 
 	log::Reader<tuple_type_kinematics> lr_kinematics(tmpFile_kinematics);

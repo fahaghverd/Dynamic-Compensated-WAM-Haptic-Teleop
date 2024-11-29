@@ -99,7 +99,7 @@ def plot_data(kinematics_data, dynamics_data, num_data):
     # Subplot for Joint 2 Acceleration
     plt.subplot(num_data, 2, 5)
     plt.plot(kinematics_time, kinematics_data['desired joint acc'][:, 0], label='Desired Joint 2 Acceleration', linestyle='--')
-    plt.plot(kinematics_time, kinematics_data['feedback joint acc.'][:, 0], label='Feedback Joint 2 Acceleration', linestyle='-')
+    plt.plot(kinematics_time, kinematics_data['feedback joint acc'][:, 0], label='Feedback Joint 2 Acceleration', linestyle='-')
     plt.title('Joint 2 Acceleration')
     plt.xlabel('Time (s)')
     plt.ylabel('Acceleration')
@@ -108,7 +108,7 @@ def plot_data(kinematics_data, dynamics_data, num_data):
     # Subplot for Joint 4 Acceleration
     plt.subplot(num_data, 2, 6)
     plt.plot(kinematics_time, kinematics_data['desired joint acc'][:, 2], label='Desired Joint 4 Acceleration', linestyle='--')
-    plt.plot(kinematics_time, kinematics_data['feedback joint acc.'][:, 2], label='Feedback Joint 4 Acceleration', linestyle='-')
+    plt.plot(kinematics_time, kinematics_data['feedback joint acc'][:, 2], label='Feedback Joint 4 Acceleration', linestyle='-')
     plt.title('Joint 4 Acceleration')
     plt.xlabel('Time (s)')
     plt.ylabel('Acceleration')
@@ -249,7 +249,7 @@ def calculate_errors(kinematics_data, dynamics_data):
 
 
 def main(folder_name):
-    base_folder = './.data'  # Adjust this to your actual folder structure
+    base_folder = './.data_ral'  # Adjust this to your actual folder structure
     folder_path = os.path.join(base_folder, folder_name)
 
     config_file = os.path.join(folder_path, 'config.txt')
@@ -263,13 +263,13 @@ def main(folder_name):
     kinematics_data = read_data(kinematics_file, kinematics_vars)
     dynamics_data = read_data(dynamics_file, dynamics_vars)
 
-    PD_2 = np.mean(np.abs(dynamics_data[dynamics_vars[5]][:, 0]))
-    PD_4 = np.mean(np.abs(dynamics_data[dynamics_vars[5]][:, 2]))
+    PD_2 = np.mean(np.abs(dynamics_data['PD'][:, 0]))
+    PD_4 = np.mean(np.abs(dynamics_data['PD'][:, 2]))
     print("PD_2: ", PD_2)
     print("PD_4: ", PD_4)
 
     # cal_extorq = dynamics_data[dynamics_vars[3]] - (dynamics_data[dynamics_vars[1]] - dynamics_data[dynamics_vars[2]] - dynamics_data[dynamics_vars[4]])
-    cal_extorq = dynamics_data[dynamics_vars[3]] - (dynamics_data[dynamics_vars[5]]) 
+    cal_extorq = dynamics_data['inverse dynamic'] - dynamics_data['PD'] 
     dynamics_data['calculated external torque'] = cal_extorq
     dynamics_vars.append("calculated external torque")
 

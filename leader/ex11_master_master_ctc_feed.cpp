@@ -215,11 +215,11 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	
 
 	jv_type jvLimits_default;
-	jvLimits_default << 5, 5, 5;
+	jvLimits_default << 10, 10, 10;
 	jv_type jvLimits = jv_type(getEnvEigenVector<DOF>("jv_limits", v_type(jvLimits_default)));
 	systems::Callback<jv_type> jvSat(boost::bind(saturateJv<DOF>,_1, jvLimits));
 	ja_type jaLimits_default;
-	jaLimits_default << 5, 5, 5; //Increaseade just to discard it
+	jaLimits_default << 10, 10, 10; //Increaseade just to discard it
 	ja_type jaLimits = ja_type(getEnvEigenVector<DOF>("ja_limits", v_type(jaLimits_default)));
 	systems::Callback<ja_type> jaSat(boost::bind(saturateJa<DOF>,_1, jaLimits));
 	jt_type jtLimits_default;	
@@ -237,7 +237,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	pm.getExecutionManager()->startManaging(hp2);
 	sleep(1);
 
-	connect(wam.jpOutput, feedFWD.jpInputDynamics); 
+	connect(mm.output, feedFWD.jpInputDynamics); 
 	connect(jvSat.output, feedFWD.jvInputDynamics);
     connect(jaSat.output, feedFWD.jaInputDynamics);
 
@@ -265,7 +265,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	systems::connect(timelog.output, tg_kinematics.template getInput<0>());
 	systems::connect(mm.output, tg_kinematics.template getInput<1>());
 	systems::connect(wam.jpOutput, tg_kinematics.template getInput<2>());
-	systems::connect(jvSat.output, tg_kinematics.template getInput<3>());
+	systems::connect(jvDes.output, tg_kinematics.template getInput<3>());
 	systems::connect(wam.jvOutput, tg_kinematics.template getInput<4>());
 	systems::connect(jaSat.output, tg_kinematics.template getInput<5>());
 	systems::connect(jaCur.output, tg_kinematics.template getInput<6>());
@@ -294,6 +294,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			PERIOD_MULTIPLIER);
 
 
+
 	std::vector<std::string> autoCmds;
 	std::string line;
 	v_type gainTmp;
@@ -320,12 +321,11 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				wam.trackReferenceSignal(mm.output);
 				connect(feedSat.output, wam.input);
 
+
 				if (mm.isLinked()) {
 					printf("Linked with remote WAM.\n");
-
 					connect(tg_kinematics.output, logger_kinematics.input);
 					connect(tg_dynamics.output, logger_dynamics.input);
-					
 				} else {
 					printf("WARNING: Linking was unsuccessful.\n");
 				}
@@ -391,12 +391,23 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			break;
 		}
 
+		case 'c':{
+				timelog.start();
+				printf("Logging started.\n");
+				break; 
+		}
+
 		case 's':{
+
+				timelog.stop();
+				timelog.reset();
 				logger_kinematics.closeLog();
 				logger_dynamics.closeLog();
 				printf("Logging stopped.\n");
-				timelog.stop();
-				timelog.reset();
+				break;
+		}
+
+		case 'e': {
 				exit_called = true; // Set exit_called to true to break out of the loop
 				break;
 		}
@@ -405,6 +416,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			printf("\n");
 			printf("    'l' to toggle linking with other WAM\n");
 			printf("    't' to tune control gains\n");
+			printf("    'c' to start collecting data\n");
 			printf("    's' to save data\n");
 			break;
 		
@@ -414,29 +426,28 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	// Create the data directory using the provided name
 	std::string folderName = argv[2];
 	// Create the data directory using the provided name
-	std::string command = std::string("mkdir -p .data/") + folderName; // -p flag ensures it doesn't fail if the directory exists
+	std::string command = std::string("mkdir -p .data_ral/") + folderName; // -p flag ensures it doesn't fail if the directory exists
 	if (system(command.c_str()) != 0) {
     	std::cerr << "Error: Could not create directory." << std::endl;
     	return 1;
 	}
 
-	std::string kinematicsFilename = ".data/" + folderName + "/kinematics.txt";
-	std::string dynamicsFilename = ".data/" + folderName + "/dynamics.txt";
-	std::string configFilename = ".data/" + folderName + "/config.txt";
+	std::string kinematicsFilename = ".data_ral/" + folderName + "/kinematics.txt";
+	std::string dynamicsFilename = ".data_ral/" + folderName + "/dynamics.txt";
+	std::string configFilename = ".data_ral/" + folderName + "/config.txt";
 	std::ofstream kinematicsFile(kinematicsFilename);
 	std::ofstream dynamicsFile(dynamicsFilename);
 	std::ofstream configFile(configFilename);
 
 	//Config File Writing
-	configFile << "Master Master Teleop with Dynamic Compensation and Sinusoidal-Leader.\n";
+	configFile << "Master Master Teleop with FeedFwd Compensation.\n";
 	configFile << "Kinematics data: time, desired joint pos, feedback joint pos, desired joint vel, feedback joint vel, desired joint acc, feedback joint acc\n";
-	configFile << "Dynamics data: time, wam joint torque input, wam gravity input, dynamic feed forward, inverse dynamic, applied external torque\n";
+	configFile << "Dynamics data: time, wam joint torque input, wam gravity input, dynamic feed forward, inverse dynamic, PD\n";
 	configFile << "Joint Position PID Controller: \nkp: " << wam.jpController.getKp() << "\nki: " << wam.jpController.getKi()<<  "\nkd: "<< wam.jpController.getKd() <<"\nControl Signal Limit: " << wam.jpController.getControlSignalLimit() <<".\n";
 	configFile << "Sync Pos:" << SYNC_POS;
-	configFile << "\nDesired Joint Vel Saturation Limit: " << jvLimits;
-	configFile << "\nDesired Joint Acc Saturation Limit: " << jaLimits;
-	configFile << "\nCurrent Joint Acc Saturation Limit: " << jaLimits;
-	configFile << "\nFeedFwd Torque Saturation Limit: " << jtLimits;
+	configFile << "\nJoint Vel Saturation Limit: " << jvLimits;
+	configFile << "\nJoint Acc Saturation Limit: " << jaLimits;
+	configFile << "\nTorque Saturation Limit: " << jtLimits;
 	configFile << "\nHigh Pass Filter Frq:" << h_omega_p;
 	// configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega_p;
 

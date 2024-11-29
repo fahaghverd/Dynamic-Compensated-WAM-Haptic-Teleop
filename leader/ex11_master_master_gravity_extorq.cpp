@@ -159,9 +159,9 @@ template <size_t DOF> int wam_main(int argc, char **argv, ProductManager &pm, sy
 
 	//Definning syn pos 
 	jp_type SYNC_POS_default; // the position each WAM should move to before linking
-    SYNC_POS_default[1] = -1.5;
-    SYNC_POS_default[2] = -0.01;
-    SYNC_POS_default[3] = 3.11;
+    SYNC_POS_default[0] = 0.2;
+    SYNC_POS_default[1] = 0.0;
+    SYNC_POS_default[2] = 0.0;
 	jp_type SYNC_POS = jp_type(getEnvEigenVector<DOF>("SYNC_POS", v_type(SYNC_POS_default)));
 
     //Master Master System
@@ -242,8 +242,8 @@ template <size_t DOF> int wam_main(int argc, char **argv, ProductManager &pm, sy
 	systems::connect(wam.jtSum.output, tg_dynamics.template getInput<1>());
 	systems::connect(wam.gravity.output, tg_dynamics.template getInput<2>());
 	systems::connect(inverseDyn.dynamicsFeedFWD, tg_dynamics.template getInput<3>());
-    systems::connect(extorqFeedFWD.extorq, tg_dynamics.template getInput<4>());
-	systems::connect(wam.jpController.controlOutput, tg_dynamics.template getInput<5>());
+	systems::connect(wam.jpController.controlOutput, tg_dynamics.template getInput<4>());
+    systems::connect(extorqFeedFWD.extorq, tg_dynamics.template getInput<5>());
 
 	typedef boost::tuple<double, jt_type, jt_type, jt_type, jt_type, jt_type> tuple_type_dynamics;
 	systems::PeriodicDataLogger<tuple_type_dynamics> logger_dynamics(
@@ -391,25 +391,23 @@ template <size_t DOF> int wam_main(int argc, char **argv, ProductManager &pm, sy
     	return 1;
 	}
 
-	std::string kinematicsFilename = ".data/" + folderName + "/kinematics.txt";
-	std::string dynamicsFilename = ".data/" + folderName + "/dynamics.txt";
-	std::string configFilename = ".data/" + folderName + "/config.txt";
+	std::string kinematicsFilename = ".data_ral/" + folderName + "/kinematics.txt";
+	std::string dynamicsFilename = ".data_ral/" + folderName + "/dynamics.txt";
+	std::string configFilename = ".data_ral/" + folderName + "/config.txt";
 	std::ofstream kinematicsFile(kinematicsFilename);
 	std::ofstream dynamicsFile(dynamicsFilename);
 	std::ofstream configFile(configFilename);
 
 	//Config File Writing
 	configFile << "Master Master Teleop with Gravity Compensation and Sinusoidal External Torque-Leader.\n";
-	configFile << "Kinematics data: time, desired joint pos, feedback joint pos, desired joint vel, feedback joint vel, desired joint acc, feedback joint acc.\n";
-	configFile << "Dynamics data: time, wam joint torque input, wam gravity input, inverse dynamic, applied external torque, PD\n";
+	configFile << "Kinematics data: time, desired joint pos, feedback joint pos, desired joint vel, feedback joint vel, desired joint acc, feedback joint acc\n";
+	configFile << "Dynamics data: time, wam joint torque input, wam gravity input, inverse dynamic, PD, applied external torque\n";
 	configFile << "Joint Position PID Controller: \nkp: " << wam.jpController.getKp() << "\nki: " << wam.jpController.getKi()<<  "\nkd: "<< wam.jpController.getKd() <<"\nControl Signal Limit: " << wam.jpController.getControlSignalLimit() <<".\n";
 	configFile << "Sync Pos:" << SYNC_POS;
 	// configFile << "\nDesired Joint Vel Saturation Limit: " << jvLimits;
 	// configFile << "\nDesired Joint Acc Saturation Limit: " << jaLimits
 	// configFile << "\nCurrent Joint Acc Saturation Limit: " << jaLimits;
-	configFile << "\nHigh Pass Filter Frq used to get desired vel and acc:" << h_omega_p;
-	configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega_p;
-	configFile << "\nTanh Coeef in Dynamics:" << coeff;
+	configFile << "\nHigh Pass Filter Frq used:" << h_omega_p;
 	configFile << "\nFrequency and amplitude for the applied external torque: F:" << f << "A: " << A;
 
 	log::Reader<tuple_type_kinematics> lr_kinematics(tmpFile_kinematics);

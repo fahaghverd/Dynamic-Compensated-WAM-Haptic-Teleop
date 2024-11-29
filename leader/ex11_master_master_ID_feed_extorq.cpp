@@ -194,7 +194,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	//Definning syn pos 
 	jp_type SYNC_POS_default; // the position each WAM should move to before linking
-    SYNC_POS_default[0] = 0.0;
+    SYNC_POS_default[0] = 0.2;
     SYNC_POS_default[1] = 0.0;
     SYNC_POS_default[2] = 0.0;
 	jp_type SYNC_POS = jp_type(getEnvEigenVector<DOF>("SYNC_POS", v_type(SYNC_POS_default)));
@@ -210,29 +210,25 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	hp1.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
 	systems::FirstOrderFilter<jp_type> hp2;
 	hp2.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
-	systems::Gain<jp_type, double, jv_type> jvCur(1.0);
 	systems::Gain<jp_type, double, ja_type> jaCur(1.0);
 	jv_type jvLimits_default;
-	jvLimits_default << 5, 5, 5;
+	jvLimits_default << 2, 2, 2;
 	jv_type jvLimits = jv_type(getEnvEigenVector<DOF>("jv_limits", v_type(jvLimits_default)));
 	systems::Callback<jv_type> jvSat(boost::bind(saturateJv<DOF>,_1, jvLimits));
 	ja_type jaLimits_default;
-	jaLimits_default << 5, 5, 5; //Increaseade just to discard it
+	jaLimits_default << 2, 2, 2; //Increaseade just to discard it
 	ja_type jaLimits = ja_type(getEnvEigenVector<DOF>("ja_limits", v_type(jaLimits_default)));
 	systems::Callback<ja_type> jaSat(boost::bind(saturateJa<DOF>,_1, jaLimits));
 	jt_type jtLimits_default;	
 	jtLimits_default << 20, 20, 20;
 	jt_type jtLimits = jt_type(getEnvEigenVector<DOF>("jtLimits", v_type(jtLimits_default)));
 	systems::Callback<jt_type> feedSat(boost::bind(saturateJt<DOF>,_1, jtLimits));
-	double coeff_default = 1000;
-	double coeff = getEnvDouble("coeff_tanh", coeff_default);
-	Dynamics<DOF> feedFWD(coeff);
+	Dynamics<DOF> feedFWD;
 
 	connect(wam.jpOutput, hp1.input);
 	connect(hp1.output, hp2.input);
 	connect(hp2.output, jaCur.input);
-	connect(hp1.output, jvCur.input);
-	connect(jvCur.output, jvSat.input);
+	connect(wam.jvOutput, jvSat.input);
 	connect(jaCur.output, jaSat.input);
 	pm.getExecutionManager()->startManaging(hp2);
 	sleep(1);
@@ -242,9 +238,9 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
     connect(jaSat.output, feedFWD.jaInputDynamics);
 
 	//ID for arm dynamics
-	Dynamics<DOF> inverseDyn(coeff);
+	Dynamics<DOF> inverseDyn;
 	connect(wam.jpOutput, inverseDyn.jpInputDynamics); 
-	connect(jvCur.output, inverseDyn.jvInputDynamics);
+	connect(wam.jvOutput, inverseDyn.jvInputDynamics);
     connect(jaCur.output, inverseDyn.jaInputDynamics);
 
 	//Applied External Torque
@@ -288,8 +284,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	systems::connect(wam.gravity.output, tg_dynamics.template getInput<2>());
 	systems::connect(feedFWD.dynamicsFeedFWD, tg_dynamics.template getInput<3>());	
 	systems::connect(inverseDyn.dynamicsFeedFWD, tg_dynamics.template getInput<4>());
-	systems::connect(extorqFeedFWD.extorq, tg_dynamics.template getInput<5>());
-	systems::connect(wam.jpController.controlOutput, tg_dynamics.template getInput<6>());
+	systems::connect(wam.jpController.controlOutput, tg_dynamics.template getInput<5>());
+	systems::connect(extorqFeedFWD.extorq, tg_dynamics.template getInput<6>());
 
 	typedef boost::tuple<double, jt_type, jt_type, jt_type, jt_type, jt_type, jt_type> tuple_type_dynamics;
 	systems::PeriodicDataLogger<tuple_type_dynamics> logger_dynamics(
@@ -450,16 +446,14 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	//Config File Writing
 	configFile << "Master Master Teleop with Dynamic Compensation and Sinusoidal External Torque-Leader.\n";
 	configFile << "Kinematics data: time, desired joint pos, feedback joint pos, desired joint vel, feedback joint vel, desired joint acc, feedback joint acc\n";
-	configFile << "Dynamics data: time, wam joint torque input, wam gravity input, dynamic feed forward, inverse dynamic, applied external torque\n";
+	configFile << "Dynamics data: time, wam joint torque input, wam gravity input, dynamic feed forward, inverse dynamic, PD, applied external torque\n";
 	configFile << "Joint Position PID Controller: \nkp: " << wam.jpController.getKp() << "\nki: " << wam.jpController.getKi()<<  "\nkd: "<< wam.jpController.getKd() <<"\nControl Signal Limit: " << wam.jpController.getControlSignalLimit() <<".\n";
 	configFile << "Sync Pos:" << SYNC_POS;
-	configFile << "\nDesired Joint Vel Saturation Limit: " << jvLimits;
-	configFile << "\nDesired Joint Acc Saturation Limit: " << jaLimits;
-	configFile << "\nCurrent Joint Acc Saturation Limit: " << jaLimits;
+	configFile << "\n Joint Vel Saturation Limit: " << jvLimits;
+	configFile << "\n Joint Acc Saturation Limit: " << jaLimits;
 	configFile << "\nFeedFwd Torque Saturation Limit: " << jtLimits;
-	configFile << "\nHigh Pass Filter Frq used to get desired vel and acc:" << h_omega_p;
-	configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega_p;
-	configFile << "\nTanh Coeef in Dynamics:" << coeff;
+	configFile << "\nHigh Pass Filter Frq used:" << h_omega_p;
+	// configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega_p;
 	configFile << "\nFrequency and amplitude for the applied external torque: F:" << f << "A: " << A;
 
 	log::Reader<tuple_type_kinematics> lr_kinematics(tmpFile_kinematics);

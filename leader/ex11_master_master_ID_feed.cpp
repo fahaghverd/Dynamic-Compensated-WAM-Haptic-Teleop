@@ -210,29 +210,25 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	hp1.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
 	systems::FirstOrderFilter<jp_type> hp2;
 	hp2.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
-	systems::Gain<jp_type, double, jv_type> jvCur(1.0);
 	systems::Gain<jp_type, double, ja_type> jaCur(1.0);
 	jv_type jvLimits_default;
-	jvLimits_default << 5, 5, 5;
+	jvLimits_default << 2, 2, 2;
 	jv_type jvLimits = jv_type(getEnvEigenVector<DOF>("jv_limits", v_type(jvLimits_default)));
 	systems::Callback<jv_type> jvSat(boost::bind(saturateJv<DOF>,_1, jvLimits));
 	ja_type jaLimits_default;
-	jaLimits_default << 5, 5, 5; //Increaseade just to discard it
+	jaLimits_default << 2, 2, 2; //Increaseade just to discard it
 	ja_type jaLimits = ja_type(getEnvEigenVector<DOF>("ja_limits", v_type(jaLimits_default)));
 	systems::Callback<ja_type> jaSat(boost::bind(saturateJa<DOF>,_1, jaLimits));
 	jt_type jtLimits_default;	
 	jtLimits_default << 20, 20, 20;
 	jt_type jtLimits = jt_type(getEnvEigenVector<DOF>("jtLimits", v_type(jtLimits_default)));
 	systems::Callback<jt_type> feedSat(boost::bind(saturateJt<DOF>,_1, jtLimits));
-	double coeff_default = 1000;
-	double coeff = getEnvDouble("coeff_tanh", coeff_default);
 	Dynamics<DOF> feedFWD;
 
 	connect(wam.jpOutput, hp1.input);
 	connect(hp1.output, hp2.input);
 	connect(hp2.output, jaCur.input);
-	connect(hp1.output, jvCur.input);
-	connect(jvCur.output, jvSat.input);
+	connect(wam.jvOutput, jvSat.input);
 	connect(jaCur.output, jaSat.input);
 	pm.getExecutionManager()->startManaging(hp2);
 	sleep(1);
@@ -241,24 +237,37 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	connect(jvSat.output, feedFWD.jvInputDynamics);
     connect(jaSat.output, feedFWD.jaInputDynamics);
 
+
+	connect(feedFWD.dynamicsFeedFWD, feedSat.input);
+
 	//ID for arm dynamics
 	Dynamics<DOF> inverseDyn;
 	connect(wam.jpOutput, inverseDyn.jpInputDynamics); 
-	connect(jvCur.output, inverseDyn.jvInputDynamics);
+	connect(wam.jvOutput, inverseDyn.jvInputDynamics);
     connect(jaCur.output, inverseDyn.jaInputDynamics);
 
-	connect(feedFWD.dynamicsFeedFWD, feedSat.input);
+	//Calculating Des v and a
+	systems::Gain<jp_type, double, jv_type> jvDes(1.0);
+	systems::Gain<jp_type, double, ja_type> jaDes(1.0);
+	systems::FirstOrderFilter<jp_type> hp3;
+	hp3.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
+	systems::FirstOrderFilter<jp_type> hp4;
+	hp4.setHighPass(jp_type(h_omega_p), jp_type(h_omega_p));
 	
-	
+	connect(mm.output, hp3.input);
+	connect(hp3.output, hp4.input);
+	connect(hp4.output, jaDes.input);
+	connect(hp3.output, jvDes.input);
+
 	//	RT Logging stuff : config
 	systems::Ramp timelog(pm.getExecutionManager(), 1.0);
 	systems::TupleGrouper<double, jp_type, jp_type, jv_type, jv_type, ja_type, ja_type> tg_kinematics;
 	systems::connect(timelog.output, tg_kinematics.template getInput<0>());
 	systems::connect(mm.output, tg_kinematics.template getInput<1>());
 	systems::connect(wam.jpOutput, tg_kinematics.template getInput<2>());
-	systems::connect(jvSat.output, tg_kinematics.template getInput<3>());
+	systems::connect(jvDes.output, tg_kinematics.template getInput<3>());
 	systems::connect(wam.jvOutput, tg_kinematics.template getInput<4>());
-	systems::connect(jaSat.output, tg_kinematics.template getInput<5>());
+	systems::connect(jaDes.output, tg_kinematics.template getInput<5>());
 	systems::connect(jaCur.output, tg_kinematics.template getInput<6>());
 	
 
@@ -311,12 +320,14 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				wam.trackReferenceSignal(mm.output);
 				connect(feedSat.output, wam.input);
 
+
+				connect(tg_kinematics.output, logger_kinematics.input);
+				connect(tg_dynamics.output, logger_dynamics.input);
+
 				btsleep(0.1); 
 				if (mm.isLinked()) {
 					printf("Linked with remote WAM.\n");
 
-					connect(tg_kinematics.output, logger_kinematics.input);
-					connect(tg_dynamics.output, logger_dynamics.input);
 					
 				} else {
 					printf("WARNING: Linking was unsuccessful.\n");
@@ -383,6 +394,12 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			break;
 		}
 
+		case 'c':{
+				timelog.start();
+				printf("Logging started.\n");
+				break; 
+		}
+
 		case 's':{
 				logger_kinematics.closeLog();
 				logger_dynamics.closeLog();
@@ -397,6 +414,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			printf("\n");
 			printf("    'l' to toggle linking with other WAM\n");
 			printf("    't' to tune control gains\n");
+			printf("    'c' to start collecting data\n");
 			printf("    's' to save data\n");
 			break;
 		
@@ -420,17 +438,17 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	std::ofstream configFile(configFilename);
 
 	//Config File Writing
-	configFile << "Master Master Teleop with Dynamic Compensation and Sinusoidal External Torque-Leader.\n";
+	configFile << "Master Master Teleop with local Dynamic Compensation and Sinusoidal External Torque-Leader.\n";
 	configFile << "Kinematics data: time, desired joint pos, feedback joint pos, desired joint vel, feedback joint vel, desired joint acc, feedback joint acc\n";
-	configFile << "Dynamics data: time, wam joint torque input, wam gravity input, dynamic feed forward, inverse dynamic, applied external torque\n";
+	configFile << "Dynamics data: time, wam joint torque input, wam gravity input, dynamic feed forward, inverse dynamic, PD\n";
 	configFile << "Joint Position PID Controller: \nkp: " << wam.jpController.getKp() << "\nki: " << wam.jpController.getKi()<<  "\nkd: "<< wam.jpController.getKd() <<"\nControl Signal Limit: " << wam.jpController.getControlSignalLimit() <<".\n";
 	configFile << "Sync Pos:" << SYNC_POS;
 	configFile << "\nDesired Joint Vel Saturation Limit: " << jvLimits;
 	configFile << "\nDesired Joint Acc Saturation Limit: " << jaLimits;
 	configFile << "\nCurrent Joint Acc Saturation Limit: " << jaLimits;
 	configFile << "\nFeedFwd Torque Saturation Limit: " << jtLimits;
-	configFile << "\nHigh Pass Filter Frq used to get desired vel and acc:" << h_omega_p;
-	configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega_p;
+	configFile << "\nHigh Pass Filter Frq used:" << h_omega_p;
+	// configFile << "\nHigh Pass Filter Frq used to get current acc:" << h_omega_p;
 
 	log::Reader<tuple_type_kinematics> lr_kinematics(tmpFile_kinematics);
 	lr_kinematics.exportCSV(kinematicsFile);
